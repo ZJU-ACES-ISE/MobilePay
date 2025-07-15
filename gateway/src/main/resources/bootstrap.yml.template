@@ -1,0 +1,48 @@
+# ======= 服务器相关配置 =======
+server:
+  port: 8090
+
+# ======= Spring 应用相关配置 =======
+spring:
+  application:
+    name: gateway
+
+  cloud:
+    nacos:
+      config:
+        server-addr: <your-nacos-config-server>
+        namespace: <your-nacos-namespace>
+        username: <your-nacos-username>
+        password: <your-nacos-password>
+        file-extension: yaml
+
+      discovery:
+        server-addr: <your-nacos-discovery-server>
+        namespace: <your-nacos-namespace>
+        username: <your-nacos-username>
+        password: <your-nacos-password>
+
+    gateway:
+      routes:
+        - id: user
+          uri: lb://user
+          predicates:
+            - Path=/user/**
+        - id: admin
+          uri: lb://admin
+          predicates:
+            - Path=/admin/**
+
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+              - PATCH
+            allowedHeaders: "*"
+            allowCredentials: true
