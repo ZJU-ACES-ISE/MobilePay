@@ -40,13 +40,14 @@ public class JwtUtil {
         // 设置 JWT 的过期时间为当前时间加上传入的过期时间
         // 使用 HS256 签名算法和预定义的密钥对 JWT 进行签名
         // 调用 compact() 方法将构建好的 JWT 转换为字符串形式
-
-        return Jwts.builder()
+        String qrcode_token = Jwts.builder()
                 .setSubject(Long.toString(id))
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(SignatureAlgorithm.HS256, secretKey)
                 .compact();
+
+        return qrcode_token;
     }
 
     /**
