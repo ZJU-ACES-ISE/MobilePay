@@ -130,7 +130,7 @@ public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
     private Mono<Void> addUserInfoToRequest(ServerWebExchange exchange, String token, GatewayFilterChain chain) {
         return Mono.fromCallable(() -> {
             // 提取用户信息
-            Long userId = JwtUtil.extractUserId(token);
+            Long userId = JwtUtil.extractID(token);
             String role = JwtUtil.extractRole(token);
             
             logger.info("User authenticated: userId={}, role={}", userId, role);

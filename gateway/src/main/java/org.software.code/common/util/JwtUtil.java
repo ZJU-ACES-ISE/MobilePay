@@ -20,7 +20,7 @@ public class JwtUtil {
     private static final Logger logger = LogManager.getLogger(JwtUtil.class);
     
     // JWT签名密钥，实际应用中应从配置文件或环境变量获取
-    private static final String SECRET_KEY = "mobilepay_gateway_jwt_secret_key_2024";
+    private static final String SECRET_KEY = "mobilepay_gateway_jwt_secret_key_2025";
     
     // Token类型常量
     public static final String ACCESS_TOKEN = "access_token";
@@ -38,7 +38,7 @@ public class JwtUtil {
      * @return 用户ID
      * @throws BusinessException 如果解析失败或Token无效
      */
-    public static Long extractUserId(String token) throws BusinessException {
+    public static Long extractID(String token) throws BusinessException {
         try {
             Claims claims = extractClaims(token);
             Object userIdObj = claims.get(CLAIM_USER_ID);
