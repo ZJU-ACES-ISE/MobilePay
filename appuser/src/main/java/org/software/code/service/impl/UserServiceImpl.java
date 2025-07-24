@@ -25,15 +25,6 @@ public class UserServiceImpl implements UserService {
     // JWT Token过期时间，30天
     private static final long TOKEN_EXPIRE_TIME = 30 * 24 * 60 * 60 * 1000L;
 
-    @Override
-    public boolean validateToken(String token) {
-        try {
-            JwtUtil.extractID(token);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
     
     @Override
     public Result<UserVo> getUserProfile(String token) {

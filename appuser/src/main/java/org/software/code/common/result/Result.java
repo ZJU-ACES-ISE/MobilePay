@@ -87,6 +87,18 @@ public class Result<T> {
     }
 
     /**
+     * 静态方法，用于创建一个表示操作失败且包含自定义消息的 Result 对象，并指定泛型类型。
+     * 使用预定义的失败状态码，同时将传入的自定义消息封装到 Result 对象中，不携带具体数据。
+     *
+     * @param message 自定义的失败消息
+     * @param <T>     泛型类型
+     * @return 包含失败状态码和自定义失败消息的指定泛型的 Result 对象
+     */
+    public static <T> Result<T> failed(String message, Class<T> clazz) {
+        return new Result<>(ResultEnum.FAILED.getCode(), message, null);
+    }
+
+    /**
      * 无参构造函数，用于创建一个空的 Result 对象。
      */
     public Result() {

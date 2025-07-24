@@ -9,13 +9,6 @@ import org.software.code.vo.UserVo;
  */
 public interface UserService {
     /**
-     * 验证Token有效性
-     * @param token 用户token
-     * @return 是否有效
-     */
-    boolean validateToken(String token);
-    
-    /**
      * 查询个人信息
      * @param token 用户token
      * @return 用户个人信息

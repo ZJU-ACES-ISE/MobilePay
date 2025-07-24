@@ -9,6 +9,8 @@ import org.software.code.common.result.Result;
 import org.software.code.service.UserService;
 import org.software.code.vo.VerifyCodeVo;
 import org.software.code.vo.UserVo;
+import org.software.code.dto.UserRegisterRequest;
+import org.software.code.vo.UserRegisterVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "用户相关接口", description = "用户登录、注册、验证码等操作")
 @Validated
@@ -25,31 +29,6 @@ public class UserController {
 
     @Autowired
     private UserService userService;
-
-    /**
-     * 获取验证码接口
-     * @param phone 手机号
-     * @param scene 场景
-     * @param token 登录token
-     * @return 统一返回结构，包含验证码信息
-     */
-    @Operation(summary = "获取验证码", description = "用户输入手机号，点击\"发送验证码\"时调用，场景可为 register、resetPassword 等")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "验证码发送成功"),
-        @ApiResponse(responseCode = "409", description = "手机号已被注册，请更换手机号")
-    })
-    @GetMapping("/sendVerifyCode")
-    public Result<VerifyCodeVo> sendVerifyCode(
-            @Parameter(description = "手机号（11位）", required = true, example = "13812345678") 
-            @RequestParam String phone,
-            
-            @Parameter(description = "验证码使用场景", required = true, example = "register") 
-            @RequestParam String scene,
-            
-            @Parameter(description = "用户token", required = true) 
-            @RequestHeader("Authorization") String token) {
-        return userService.sendVerifyCode(phone, scene, token);
-    }
 
     /**
      * 查询个人信息
@@ -66,5 +45,20 @@ public class UserController {
             @Parameter(description = "Bearer 类型 Token 认证", required = true) 
             @RequestHeader("Authorization") String token) {
         return userService.getUserProfile(token);
+    }
+
+    /**
+     * 用户注册
+     * @param request 注册请求
+     * @return 注册结果
+     */
+    @Operation(summary = "用户注册", description = "完成验证码校验后，用户提交注册信息，此处不再校验手机号是否存在，也不再传验证码字段")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "注册成功"),
+        @ApiResponse(responseCode = "400", description = "注册失败")
+    })
+    @PostMapping("/register")
+    public Result<UserRegisterVo> register(@RequestBody UserRegisterRequest request) {
+        return userService.register(request.getPhone(), request.getLoginPassword(), request.getPayPassword());
     }
 }

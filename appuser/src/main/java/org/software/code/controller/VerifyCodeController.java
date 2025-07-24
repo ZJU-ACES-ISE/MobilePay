@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.software.code.common.result.Result;
 import org.software.code.dto.VerifyCodeCheckRequest;
-import org.software.code.service.UserService;
 import org.software.code.service.VerifyCodeService;
 import org.software.code.vo.VerifyCodeVo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,15 +21,11 @@ public class VerifyCodeController {
 
     @Autowired
     private VerifyCodeService verifyCodeService;
-    
-    @Autowired
-    private UserService userService;
 
     /**
      * 发送验证码接口
      * @param phone 手机号
      * @param scene 场景
-     * @param token 登录token (可选，某些场景可能需要)
      * @return 统一返回结构，包含验证码信息
      */
     @Operation(summary = "发送验证码", description = "用户输入手机号，点击发送验证码时调用，场景可为 register、resetPassword 等")
@@ -44,17 +39,9 @@ public class VerifyCodeController {
             @RequestParam String phone,
             
             @Parameter(description = "验证码使用场景", required = true, example = "register") 
-            @RequestParam String scene,
-            
-            @Parameter(description = "用户token（可选）", required = false) 
-            @RequestHeader(value = "Authorization", required = false) String token) {
+            @RequestParam String scene) {
         
-        // 检查token (若需要)
-        if (token != null && !userService.validateToken(token)) {
-            return Result.failed("Token无效或已过期", VerifyCodeVo.class);
-        }
-        
-        // 发送验证码
+        // 发送验证码，token验证由网关统一处理
         return verifyCodeService.sendVerifyCode(phone, scene);
     }
     
@@ -72,4 +59,4 @@ public class VerifyCodeController {
     public Result<?> checkVerifyCode(@RequestBody VerifyCodeCheckRequest request) {
         return verifyCodeService.checkVerifyCode(request.getPhone(), request.getVerifyCode(), request.getScene());
     }
-} 
+}
