@@ -7,6 +7,7 @@ import lombok.Data;
 
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -71,13 +72,13 @@ public class BankCard implements Serializable {
     /**
      * 绑定时间
      */
-    private Date bindTime;
+    private LocalDateTime bindTime;
 
     /**
      * 卡号尾号，自动生成，用于展示
      * 此字段为数据库计算列，不能手动插入或更新
      */
-    @TableField(exist = true)
+    @TableField(exist = false)
     private String lastFourDigits;
 
     @TableField(exist = false)

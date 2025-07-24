@@ -4,6 +4,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.concurrent.TimeUnit;
 
 /**
  * RedisUtil 是一个工具类，用于简化与 Redis 数据库的交互操作。
@@ -57,5 +58,16 @@ public class RedisUtil {
     public void deleteValue(String key) {
         // 调用 StringRedisTemplate 的 delete() 方法根据键从 Redis 中删除对应的键值对
         stringRedisTemplate.delete(key);
+    }
+
+    /**
+     * 设置某个键的过期时间
+     *
+     * @param key 键
+     * @param timeout 过期时长
+     * @param unit 时间单位，如 TimeUnit.MINUTES
+     */
+    public void setExpire(String key, long timeout, TimeUnit unit) {
+        stringRedisTemplate.expire(key, timeout, unit);
     }
 }

@@ -99,6 +99,11 @@ public enum ExceptionEnum {
     /** 折扣策略不适用于当前用户 */
     STRATEGY_NOT_APPLICABLE("40007", "折扣策略不适用于当前用户"),
 
+    //银行卡相关异常
+    CARD_ALREADY_BOUND("50001", "当前银行卡已被绑定"),
+    VERIFY_CODE_EXPIRED("50002", "验证码已过期"),
+    VERIFY_CODE_INVALID("50003", "验证码错误"),
+    DATA_NOT_FOUND("50004", "银行卡不存在"),
     ;
 
     // 错误码

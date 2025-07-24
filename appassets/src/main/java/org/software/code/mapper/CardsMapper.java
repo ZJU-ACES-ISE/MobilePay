@@ -6,4 +6,5 @@ import org.software.code.entity.BankCard;
 
 @Mapper
 public interface CardsMapper extends BaseMapper<BankCard> {
+    void clearDefaultCard(Long userId);
 }
