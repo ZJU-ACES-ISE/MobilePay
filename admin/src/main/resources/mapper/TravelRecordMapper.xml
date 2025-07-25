@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.software.code.mapper.TravelRecordMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="org.software.code.entity.TravelRecord">
+        <id column="id" property="id" />
+        <result column="user_id" property="userId" />
+        <result column="entry_site_id" property="entrySiteId" />
+        <result column="exit_site_id" property="exitSiteId" />
+        <result column="entry_device_id" property="entryDeviceId" />
+        <result column="exit_device_id" property="exitDeviceId" />
+        <result column="entry_time" property="entryTime" />
+        <result column="exit_time" property="exitTime" />
+        <result column="amount" property="amount" />
+        <result column="discount_amount" property="discountAmount" />
+        <result column="actual_amount" property="actualAmount" />
+        <result column="status" property="status" />
+        <result column="payment_method" property="paymentMethod" />
+        <result column="created_time" property="createdTime" />
+        <result column="updated_time" property="updatedTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, user_id, entry_site_id, exit_site_id, entry_device_id, exit_device_id, entry_time, exit_time, amount, discount_amount, actual_amount, status, payment_method, created_time, updated_time
+    </sql>
+
+</mapper>

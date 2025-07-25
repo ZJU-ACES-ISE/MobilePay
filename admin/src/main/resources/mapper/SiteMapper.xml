@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.software.code.mapper.SiteMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="org.software.code.entity.Site">
+        <id column="id" property="id" />
+        <result column="site_code" property="siteCode" />
+        <result column="site_name" property="siteName" />
+        <result column="city" property="city" />
+        <result column="city_code" property="cityCode" />
+        <result column="line_name" property="lineName" />
+        <result column="longitude" property="longitude" />
+        <result column="latitude" property="latitude" />
+        <result column="address" property="address" />
+        <result column="status" property="status" />
+        <result column="created_time" property="createdTime" />
+        <result column="updated_time" property="updatedTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, site_code, site_name, city, city_code, line_name, longitude, latitude, address, status, created_time, updated_time
+    </sql>
+
+</mapper>

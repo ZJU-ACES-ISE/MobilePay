@@ -1,38 +1,49 @@
-# ======= 服务器相关配置 =======
+# ======= Server Configuration =======
 server:
-  port: 8090
+  port: <your_server_port>
 
-# ======= Spring 应用相关配置 =======
+# ======= Spring Application Configuration =======
 spring:
   application:
     name: gateway
-
+    
+  # ======= Spring Cloud Configuration =======
   cloud:
     nacos:
+      # ======= Nacos Configuration Management =======
       config:
-        server-addr: <your-nacos-config-server>
-        namespace: <your-nacos-namespace>
-        username: <your-nacos-username>
-        password: <your-nacos-password>
+        server-addr: <your_nacos_config_server>
+        namespace: <your_nacos_namespace>
+        username: <your_nacos_username>
+        password: <your_nacos_password>
         file-extension: yaml
-
+        
+      # ======= Nacos Service Discovery =======
       discovery:
-        server-addr: <your-nacos-discovery-server>
-        namespace: <your-nacos-namespace>
-        username: <your-nacos-username>
-        password: <your-nacos-password>
-
+        server-addr: <your_nacos_discovery_server>
+        namespace: <your_nacos_namespace>
+        username: <your_nacos_username>
+        password: <your_nacos_password>
+        
+    # ======= Spring Cloud Gateway Configuration =======
     gateway:
       routes:
+        # User service route
         - id: user
           uri: lb://user
           predicates:
             - Path=/user/**
+          filters:
+            - StripPrefix=1
+        # Admin service route
         - id: admin
           uri: lb://admin
           predicates:
             - Path=/admin/**
-
+          filters:
+            - StripPrefix=1
+            
+      # ======= Global CORS Configuration =======
       globalcors:
         corsConfigurations:
           '[/**]':
@@ -46,3 +57,18 @@ spring:
               - PATCH
             allowedHeaders: "*"
             allowCredentials: true
+
+# ======= Internal Service Authentication Configuration =======
+app:
+  internal:
+    secret: <your_internal_secret>
+
+# ======= SpringDoc API Documentation Configuration =======
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: user
+        url: /user/v3/api-docs
+      - name: admin
+        url: /admin/v3/api-docs
