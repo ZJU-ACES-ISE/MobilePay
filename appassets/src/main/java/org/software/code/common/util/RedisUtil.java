@@ -70,4 +70,16 @@ public class RedisUtil {
     public void setExpire(String key, long timeout, TimeUnit unit) {
         stringRedisTemplate.expire(key, timeout, unit);
     }
+
+    /**
+     * 判断某个键是否存在于 Redis 中
+     *
+     * @param key 要判断的键
+     * @return 如果存在返回 true，否则返回 false
+     */
+    public boolean hasKey(String key) {
+        Boolean result = stringRedisTemplate.hasKey(key);
+        // 防止返回 null，做一次非空判断
+        return Boolean.TRUE.equals(result);
+    }
 }

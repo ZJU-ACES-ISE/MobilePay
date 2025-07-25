@@ -104,7 +104,11 @@ public enum ExceptionEnum {
     VERIFY_CODE_EXPIRED("50002", "验证码已过期"),
     VERIFY_CODE_INVALID("50003", "验证码错误"),
     DATA_NOT_FOUND("50004", "银行卡不存在"),
-    ;
+
+    //资产相关异常
+    PAY_PASSWORD_INVALID("60001", "支付密码错误"),
+    BALANCE_NOT_ENOUGH("60002", "用户余额不足"),
+    BALANCE_NOT_CREATE("60003", "用户余额表未创建" );
 
     // 错误码
     private String code;
