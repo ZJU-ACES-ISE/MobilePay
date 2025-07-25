@@ -15,6 +15,7 @@ import org.software.code.mapper.BillsMapper;
 import org.software.code.mapper.CardsMapper;
 import org.software.code.mapper.UserMapper;
 import org.software.code.service.AssetsService;
+import org.software.code.vo.AssertsChartItemVo;
 import org.software.code.vo.BalanceSummaryVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -24,12 +25,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -148,58 +147,50 @@ public class AssetsServiceImpl implements AssetsService {
     //利用定时任务task
     @Override
     public BalanceSummaryVo getBalanceSummary(Long userId) {
-
-        // 1. 查询用户当前余额
+        // 1. 查询当前用户余额
         UserBalance userBalance = assetsMapper.selectOne(
                 new QueryWrapper<UserBalance>().eq("user_id", userId)
         );
-
         if (userBalance == null) {
             throw new BusinessException(ExceptionEnum.DATA_NOT_FOUND);
         }
 
-        // 2. 生成最近七天的日期字符串
-        List<String> dayList = new ArrayList<>();
-        List<BigDecimal> balanceList = new ArrayList<>();
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        // 2. 构造最近 7 天的资产折线图数据
+        List<AssertsChartItemVo> chartList = new ArrayList<>();
+        DateTimeFormatter redisKeyFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        DateTimeFormatter displayFormatter = DateTimeFormatter.ofPattern("MM-dd");
 
         for (int i = 6; i > 0; i--) {
             LocalDate day = LocalDate.now().minusDays(i);
-            String dateStr = day.format(formatter);
+            String keyDate = day.format(redisKeyFormatter);
+            String displayDate = day.format(displayFormatter);
 
-            // 添加日期展示格式：可选 yyyy-MM-dd
-            dayList.add(day.toString());
-
-            // Redis key
-            String key = "balance:history:" + userId + ":" + dateStr;
-
+            String key = "balance:history:" + userId + ":" + keyDate;
             String cachedBalance = redisUtil.getValue(key);
 
-            // 规则：若无缓存（说明那天没快照），则返回 null 或 0
-            BigDecimal balance = (cachedBalance != null)
-                    ? new BigDecimal(cachedBalance)
-                    : BigDecimal.ZERO;
+            BigDecimal balance = (cachedBalance != null) ? new BigDecimal(cachedBalance) : BigDecimal.ZERO;
 
-            balanceList.add(balance);
+            AssertsChartItemVo item = new AssertsChartItemVo();
+            item.setDay(displayDate);
+            item.setTotal_expense(balance.toPlainString());
+
+            chartList.add(item);
         }
-        dayList.add(LocalDate.now().toString());
-        balanceList.add(userBalance.getBalance());
 
-        // 3. 组装返回结果
+        // 当天：用数据库当前余额
+        LocalDate today = LocalDate.now();
+        AssertsChartItemVo todayItem = new AssertsChartItemVo();
+        todayItem.setDay(today.format(displayFormatter));
+        todayItem.setTotal_expense(userBalance.getBalance().toPlainString());
+        chartList.add(todayItem);
+
+        // 3. 封装返回对象
         BalanceSummaryVo balanceV0 = new BalanceSummaryVo();
         balanceV0.setId(userBalance.getId());
-        balanceV0.setBalance(String.valueOf(userBalance.getBalance()));
-        balanceV0.setUpdateTime(String.valueOf(userBalance.getUpdateTime()));
-        balanceV0.setDayListString(String.join(",", dayList));
-        balanceV0.setBalanceListString(balanceList.stream()
-                .map(BigDecimal::toPlainString)
-                .collect(Collectors.joining(","))
-        );
+        balanceV0.setBalance(userBalance.getBalance().toPlainString());
+        balanceV0.setUpdateTime(userBalance.getUpdateTime().toString());
+        balanceV0.setAssertsChartV0(chartList);
 
-        // 4. 返回封装对象
         return balanceV0;
     }
-
-
 }
