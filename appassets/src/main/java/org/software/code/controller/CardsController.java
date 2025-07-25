@@ -104,7 +104,7 @@ public class CardsController {
     }
 
     /**
-     * 展示银行卡
+     * 切换默认银行卡
      *
      * @param id bank_card对应的银行卡标识
      * @return 操作结果
