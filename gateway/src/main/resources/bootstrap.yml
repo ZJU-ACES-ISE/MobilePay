@@ -1,0 +1,52 @@
+# ======= 服务器相关配置 =======
+server:
+  port: 8090
+spring:
+  application:
+    name: gateway
+  cloud:
+    nacos:
+      config:
+        server-addr: localhost:8848
+        namespace: public
+        # username: nacos  # 如有需要请取消注释并填写正确的用户名
+        # password: nacos  # 如有需要请取消注释并填写正确的密码
+        file-extension: yaml
+      discovery:
+        server-addr: localhost:8848
+        namespace: public
+        # username: nacos  # 如有需要请取消注释并填写正确的用户名
+        # password: nacos  # 如有需要请取消注释并填写正确的密码
+    gateway:
+      routes:
+        - id: appUser
+          uri: lb://appUser
+          predicates:
+            - Path=/app/**
+          filters:
+           - StripPrefix=1
+        - id: appUser-api-doc
+          uri: lb://appUser
+          predicates:
+            - Path=/app/v3/api-docs/**
+          filters:
+            - StripPrefix=1
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+              - PATCH
+            allowedHeaders: "*"
+            allowCredentials: true
+    springdoc:
+      swagger-ui:
+        path: /swagger-ui.html
+        urls:
+          - name: appUser
+            url: /app/v3/api-docs

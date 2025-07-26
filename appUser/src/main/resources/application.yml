@@ -1,0 +1,37 @@
+server:
+  port: 8082
+spring:
+  application:
+    name: appUser
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://graywolf.top:6200/mobilepay?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: mobilepay250715
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        namespace: public
+        # username: nacos  # 如有需要请取消注释并填写正确的用户名
+        # password: nacos  # 如有需要请取消注释并填写正确的密码
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    password:
+  cache:
+    type: redis
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  group-configs:
+    - group: 'app'
+      paths-to-match: '/**'
+# MyBatis配置
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl 
