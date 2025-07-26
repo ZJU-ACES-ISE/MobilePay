@@ -26,9 +26,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -147,7 +146,7 @@ public class AssetsServiceImpl implements AssetsService {
     //利用定时任务task
     @Override
     public BalanceSummaryVo getBalanceSummary(Long userId) {
-        // 1. 查询当前用户余额
+        // 1. 获取当前余额
         UserBalance userBalance = assetsMapper.selectOne(
                 new QueryWrapper<UserBalance>().eq("user_id", userId)
         );
@@ -155,42 +154,75 @@ public class AssetsServiceImpl implements AssetsService {
             throw new BusinessException(ExceptionEnum.DATA_NOT_FOUND);
         }
 
-        // 2. 构造最近 7 天的资产折线图数据
         List<AssertsChartItemVo> chartList = new ArrayList<>();
         DateTimeFormatter redisKeyFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
         DateTimeFormatter displayFormatter = DateTimeFormatter.ofPattern("MM-dd");
 
-        for (int i = 6; i > 0; i--) {
-            LocalDate day = LocalDate.now().minusDays(i);
-            String keyDate = day.format(redisKeyFormatter);
+        // 从今天开始回溯 6 天
+        Map<LocalDate, BigDecimal> dailyBalanceMap = new LinkedHashMap<>();
+
+        // 当前余额作为起点
+        LocalDate today = LocalDate.now();
+        BigDecimal currentBalance = userBalance.getBalance();
+
+        for (int i = 0; i <= 6; i++) {
+            LocalDate day = today.minusDays(i);
+            String redisKey = "balance:history:" + userId + ":" + day.format(redisKeyFormatter);
             String displayDate = day.format(displayFormatter);
 
-            String key = "balance:history:" + userId + ":" + keyDate;
-            String cachedBalance = redisUtil.getValue(key);
+            String cached = redisUtil.getValue(redisKey);
+            BigDecimal dayBalance;
 
-            BigDecimal balance = (cachedBalance != null) ? new BigDecimal(cachedBalance) : BigDecimal.ZERO;
+            if (i == 0) {
+                // 1. 第一天（今天）没有缓存，直接用当前数据库余额
+                dayBalance = currentBalance;
+            }
+            else if (cached != null) {
+                // 2. 如果有缓存，直接使用
+                dayBalance = new BigDecimal(cached);
+            }
+            else {
+                // 3. 计算：下一天的余额 - 下一天的收入 + 下一天的支出
+                LocalDate nextDay = day.plusDays(1);
+                LocalDateTime start = nextDay.atStartOfDay();
+                LocalDateTime end = nextDay.plusDays(1).atStartOfDay();
 
-            AssertsChartItemVo item = new AssertsChartItemVo();
-            item.setDay(displayDate);
-            item.setTotal_expense(balance.toPlainString());
+                // 查找 nextDay 当天所有支出和收入
+                BigDecimal income = billsMapper.sumAmountByUserIdAndTypeAndTime(userId, 1, start, end); // type 1: 转入
+                BigDecimal expense = billsMapper.sumAmountByUserIdAndTypeAndTime(userId, 2, start, end);// type 2: 转出
 
-            chartList.add(item);
+                BigDecimal nextBalance = dailyBalanceMap.get(nextDay);
+                if (nextBalance == null) nextBalance = BigDecimal.ZERO;
+
+                dayBalance = nextBalance.subtract(income).add(expense);
+
+                // 存入 redis，过期时间 7 天
+                redisUtil.setValue(redisKey, dayBalance.toPlainString());
+                redisUtil.setExpire(redisKey, 7, TimeUnit.DAYS);
+//                redisUtil.setExpire(redisKey, 7, TimeUnit.SECONDS);
+            }
+
+            // 加入 map
+            dailyBalanceMap.put(day, dayBalance);
         }
 
-        // 当天：用数据库当前余额
-        LocalDate today = LocalDate.now();
-        AssertsChartItemVo todayItem = new AssertsChartItemVo();
-        todayItem.setDay(today.format(displayFormatter));
-        todayItem.setTotal_expense(userBalance.getBalance().toPlainString());
-        chartList.add(todayItem);
+        // 倒序构造图表数据（时间从早到晚）
+        dailyBalanceMap.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .forEach(entry -> {
+                    AssertsChartItemVo item = new AssertsChartItemVo();
+                    item.setDay(entry.getKey().format(displayFormatter));
+                    item.setTotal_expense(entry.getValue().toPlainString());
+                    chartList.add(item);
+                });
 
-        // 3. 封装返回对象
-        BalanceSummaryVo balanceV0 = new BalanceSummaryVo();
-        balanceV0.setId(userBalance.getId());
-        balanceV0.setBalance(userBalance.getBalance().toPlainString());
-        balanceV0.setUpdateTime(userBalance.getUpdateTime().toString());
-        balanceV0.setAssertsChartV0(chartList);
+        // 组装 VO
+        BalanceSummaryVo vo = new BalanceSummaryVo();
+        vo.setId(userBalance.getId());
+        vo.setBalance(userBalance.getBalance().toPlainString());
+        vo.setUpdateTime(userBalance.getUpdateTime().toString());
+        vo.setAssertsChartV0(chartList);
 
-        return balanceV0;
+        return vo;
     }
 }
