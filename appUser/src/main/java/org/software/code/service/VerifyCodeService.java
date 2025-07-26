@@ -11,7 +11,7 @@ public interface VerifyCodeService {
     /**
      * 发送验证码
      * @param phone 手机号
-     * @param scene 场景，如 "register"、"resetPassword" 等
+     * @param scene 场景，如 "register"(注册)、"login"(登录) 等
      * @return 结果，包含验证码信息或错误信息
      */
     Result<VerifyCodeVo> sendVerifyCode(String phone, String scene);
@@ -20,7 +20,7 @@ public interface VerifyCodeService {
      * 校验验证码
      * @param phone 手机号
      * @param verifyCode 验证码
-     * @param scene 场景
+     * @param scene 场景，如 "register"(注册)、"login"(登录) 等
      * @return 校验结果
      */
     Result<?> checkVerifyCode(String phone, String verifyCode, String scene);

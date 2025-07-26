@@ -11,48 +11,51 @@ import org.software.code.service.VerifyCodeService;
 import org.software.code.vo.VerifyCodeVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
-@Tag(name = "验证码相关接口", description = "验证码发送、校验等操作")
+@Tag(name = "验证码相关接口", description = "验证码发送和校验")
 @Validated
 @RestController
-@RequestMapping("/user/verifyCode")
+@RequestMapping("/verifyCode")
 public class VerifyCodeController {
 
     @Autowired
     private VerifyCodeService verifyCodeService;
 
     /**
-     * 发送验证码接口
+     * 发送验证码
      * @param phone 手机号
-     * @param scene 场景
-     * @return 统一返回结构，包含验证码信息
+     * @param scene 场景，register-注册，login-登录
+     * @return 验证码信息
      */
-    @Operation(summary = "发送验证码", description = "用户输入手机号，点击发送验证码时调用，场景可为 register、resetPassword 等")
+    @Operation(summary = "发送验证码", description = "向指定手机号发送验证码，支持注册和登录场景")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "验证码发送成功"),
-        @ApiResponse(responseCode = "409", description = "手机号已被注册，请更换手机号")
+        @ApiResponse(responseCode = "200", description = "发送成功"),
+        @ApiResponse(responseCode = "409", description = "手机号已被注册（注册场景）"),
+        @ApiResponse(responseCode = "404", description = "手机号未注册（登录场景）")
     })
     @GetMapping("/send")
     public Result<VerifyCodeVo> sendVerifyCode(
-            @Parameter(description = "手机号（11位）", required = true, example = "13812345678") 
+            @Parameter(description = "手机号", required = true) 
             @RequestParam String phone,
-            
-            @Parameter(description = "验证码使用场景", required = true, example = "register") 
+            @Parameter(description = "场景，register-注册，login-登录", required = true) 
             @RequestParam String scene) {
-        
-        // 发送验证码，token验证由网关统一处理
         return verifyCodeService.sendVerifyCode(phone, scene);
     }
     
     /**
-     * 校验验证码接口
-     * @param request 验证码校验请求
+     * 校验验证码
+     * @param request 校验请求
      * @return 校验结果
      */
-    @Operation(summary = "校验验证码", description = "用户输入验证码点击下一步时调用，成功后方可调用注册接口")
+    @Operation(summary = "校验验证码", description = "校验用户输入的验证码是否正确")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "验证码校验成功"),
+        @ApiResponse(responseCode = "200", description = "校验成功"),
         @ApiResponse(responseCode = "401", description = "验证码错误或已过期")
     })
     @PostMapping("/check")

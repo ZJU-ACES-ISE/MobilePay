@@ -39,7 +39,7 @@ public class VerifyCodeServiceImpl implements VerifyCodeService {
     public Result<VerifyCodeVo> sendVerifyCode(String phone, String scene) {
         // 根据场景判断是否需要检查手机号是否已注册
         if ("register".equals(scene)) {
-            // 校验手机号是否已注册
+            // 注册场景：校验手机号是否已注册，已注册则不允许再次注册
             User user = userMapper.selectOne(
                 new LambdaQueryWrapper<User>()
                     .eq(User::getPhone, phone)
@@ -47,6 +47,16 @@ public class VerifyCodeServiceImpl implements VerifyCodeService {
             
             if (user != null) {
                 return Result.<VerifyCodeVo>instance(409, "手机号已被注册，请更换手机号", null);
+            }
+        } else if ("login".equals(scene)) {
+            // 登录场景：校验手机号是否已注册，未注册则不允许登录
+            User user = userMapper.selectOne(
+                new LambdaQueryWrapper<User>()
+                    .eq(User::getPhone, phone)
+            );
+            
+            if (user == null) {
+                return Result.<VerifyCodeVo>instance(404, "手机号未注册，请先注册", null);
             }
         }
         
@@ -56,8 +66,7 @@ public class VerifyCodeServiceImpl implements VerifyCodeService {
         // 保存验证码到Redis，键格式：verify_code:场景:手机号
         String redisKey = VERIFY_CODE_PREFIX + scene + ":" + phone;
         redisTemplate.opsForValue().set(redisKey, String.valueOf(code), VERIFY_CODE_EXPIRE, TimeUnit.SECONDS);
-        
-        // 创建验证码视图对象
+
         VerifyCodeVo verifyCodeVo = new VerifyCodeVo(code, VERIFY_CODE_EXPIRE);
         
         // 实际应调用短信服务，这里直接返回验证码

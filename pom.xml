@@ -11,7 +11,7 @@
     <modules>
         <module>gateway</module>
         <module>user</module>
-        <module>appuser</module>
+        <module>appUser</module>
     </modules>
 
     <dependencyManagement>
