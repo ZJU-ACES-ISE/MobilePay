@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
 @Tag(name = "用户相关接口", description = "用户登录、注册、验证码等操作")
 @Validated
@@ -82,6 +83,23 @@ public class UserController {
         String credential = "password".equals(request.getLoginType()) ? 
                 request.getLoginPassword() : request.getVerifyCode();
         return userService.login(request.getPhone(), request.getLoginType(), credential);
+    }
+    
+    /**
+     * 退出登录
+     * @param token 用户token
+     * @return 退出结果
+     */
+    @Operation(summary = "退出登录", description = "用户退出登录，使当前token失效")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "退出成功"),
+        @ApiResponse(responseCode = "401", description = "无效的登录状态")
+    })
+    @DeleteMapping("/logout")
+    public Result<?> logout(
+            @Parameter(description = "Bearer 类型 Token 认证", required = true)
+            @RequestHeader("Authorization") String token) {
+        return userService.logout(token);
     }
     
     /**

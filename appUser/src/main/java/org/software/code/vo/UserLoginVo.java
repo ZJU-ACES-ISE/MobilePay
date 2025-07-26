@@ -25,7 +25,7 @@ public class UserLoginVo {
     /**
      * 认证Token
      */
-    @Schema(description = "认证Token", required = true, example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+    @Schema(description = "访问Token，短期有效", required = true, example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
     private String token;
     
     /**

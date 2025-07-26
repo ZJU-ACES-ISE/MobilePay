@@ -9,6 +9,7 @@ import org.software.code.mapper.UserMapper;
 import org.software.code.service.UserService;
 import org.software.code.service.VerifyCodeService;
 import org.software.code.common.util.JwtUtil;
+import org.software.code.common.util.RedisUtil;
 import org.software.code.vo.UserRegisterVo;
 import org.software.code.vo.UserVo;
 import org.software.code.vo.UserLoginVo;
@@ -19,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.Date;
+import io.jsonwebtoken.Claims;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -28,10 +31,16 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private VerifyCodeService verifyCodeService;
     
+    @Autowired
+    private RedisUtil redisUtil;
+    
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     
     // JWT Token过期时间，30天
     private static final long TOKEN_EXPIRE_TIME = 30 * 24 * 60 * 60 * 1000L;
+    
+    // Redis中黑名单token的前缀
+    private static final String TOKEN_BLACKLIST_PREFIX = "token:blacklist:";
 
     
     @Override
@@ -281,6 +290,33 @@ public class UserServiceImpl implements UserService {
             return Result.success("密码修改成功");
         } catch (Exception e) {
             return Result.failed("修改登录密码失败：" + e.getMessage());
+        }
+    }
+
+    @Override
+    public Result<?> logout(String token) {
+        try {
+            // 从token中提取用户ID，确保token有效
+            long userId = JwtUtil.extractID(token);
+            
+            // 移除Bearer前缀
+            if (token.startsWith("Bearer ")) {
+                token = token.substring(7);
+            }
+            
+            // 将token加入Redis黑名单
+            // 获取token的过期时间（作为黑名单中的过期时间）
+            Claims claims = JwtUtil.extractAllClaims(token);
+            Date expiration = claims.getExpiration();
+            long ttl = Math.max(0, expiration.getTime() - System.currentTimeMillis());
+            
+            // 将token的唯一标识添加到黑名单
+            String blacklistKey = TOKEN_BLACKLIST_PREFIX + token;
+            redisUtil.setValue(blacklistKey, String.valueOf(userId), ttl);
+            
+            return Result.success("退出成功");
+        } catch (Exception e) {
+            return Result.failed("无效的登录状态");
         }
     }
 } 

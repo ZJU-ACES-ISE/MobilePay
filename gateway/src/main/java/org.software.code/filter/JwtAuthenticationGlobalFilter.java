@@ -8,6 +8,7 @@ import org.software.code.common.except.BusinessException;
 import org.software.code.common.except.ExceptionEnum;
 import org.software.code.common.result.Result;
 import org.software.code.common.util.JwtUtil;
+import org.software.code.common.util.RedisUtil;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -41,6 +42,9 @@ public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
 
     @Resource
     private ObjectMapper objectMapper;
+    
+    @Resource
+    private RedisUtil redisUtil;
 
     private static final String TOKEN_PREFIX = "Bearer ";
     
@@ -82,6 +86,12 @@ public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
                 .flatMap(isValid -> {
                     if (!isValid) {
                         logger.warn("Token validation failed for path: {}", path);
+                        return handleAuthError(exchange, ExceptionEnum.TOKEN_EXPIRED);
+                    }
+                    
+                    // 检查token是否在黑名单中
+                    if (redisUtil.isTokenBlacklisted(token)) {
+                        logger.warn("Token is blacklisted for path: {}", path);
                         return handleAuthError(exchange, ExceptionEnum.TOKEN_EXPIRED);
                     }
                     

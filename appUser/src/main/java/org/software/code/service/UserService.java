@@ -35,6 +35,7 @@ public interface UserService {
      * @return 登录结果
      */
     Result<UserLoginVo> login(String phone, String loginType, String credential);
+
     
     /**
      * 更新用户个人信息
@@ -60,4 +61,10 @@ public interface UserService {
      */
     Result<?> updatePassword(String token, PasswordUpdateRequest request);
 
+    /**
+     * 退出登录
+     * @param token JWT token
+     * @return 退出结果
+     */
+    Result<?> logout(String token);
 } 

@@ -108,6 +108,23 @@ public class JwtUtil {
             throw new BusinessException(ExceptionEnum.TOKEN_EXPIRED);
         }
     }
+    
+    /**
+     * 获取Token中的所有Claims
+     *
+     * @param token JWT Token字符串
+     * @return Claims对象
+     * @throws BusinessException 如果解析失败或Token无效
+     */
+    public static Claims extractAllClaims(String token) throws BusinessException {
+        try {
+            return extractClaims(token);
+        } catch (Exception e) {
+            logger.error("Failed to extract claims from token: {}, error: {}", token, e.getMessage());
+            throw new BusinessException(ExceptionEnum.TOKEN_EXPIRED);
+        }
+    }
+
     /**
      * 提取Token中的Claims
      *
