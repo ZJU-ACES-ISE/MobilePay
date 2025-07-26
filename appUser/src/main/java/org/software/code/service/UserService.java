@@ -58,12 +58,6 @@ public interface UserService {
      * @param request 密码更新请求
      * @return 更新结果
      */
-    Result<Void> updatePassword(String token, PasswordUpdateRequest request);
+    Result<?> updatePassword(String token, PasswordUpdateRequest request);
 
-    /**
-     * 退出登录
-     * @param token JWT token
-     * @return 退出结果
-     */
-    Result<Void> logout(String token);
 } 
