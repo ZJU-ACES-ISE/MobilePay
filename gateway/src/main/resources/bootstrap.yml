@@ -11,7 +11,7 @@ spring:
         namespace: public
         username: nacos
         password: mobilepay250715
-
+        file-extension: yaml
       discovery:
         server-addr: graywolf.top:6202
         namespace: public
@@ -32,6 +32,20 @@ spring:
             - Path=/app/v3/api-docs/**
           filters:
             - StripPrefix=1
+        # 用户服务路由
+        - id: user
+          uri: lb://user
+          predicates:
+            - Path=/user/**
+          filters:
+            - StripPrefix=1
+        # 管理员服务路由
+        - id: admin
+          uri: lb://admin
+          predicates:
+            - Path=/admin/**
+          filters:
+            - StripPrefix=1
       globalcors:
         corsConfigurations:
           '[/**]':
@@ -45,9 +59,18 @@ spring:
               - PATCH
             allowedHeaders: "*"
             allowCredentials: true
-    springdoc:
-      swagger-ui:
-        path: /swagger-ui.html
-        urls:
-          - name: appUser
-            url: /app/v3/api-docs
+    # 内部服务认证配置
+app:
+  internal:
+    secret: mobilepay-internal-secret-2025
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: appUser
+        url: /app/v3/api-docs
+      - name: user
+        url: /user/v3/api-docs
+      - name: admin
+        url: /admin/v3/api-docs
