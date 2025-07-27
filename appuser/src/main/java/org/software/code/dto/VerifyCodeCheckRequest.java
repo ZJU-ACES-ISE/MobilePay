@@ -25,6 +25,6 @@ public class VerifyCodeCheckRequest {
     /**
      * 场景
      */
-    @Schema(description = "场景", required = true, example = "register")
+    @Schema(description = "场景", required = true, example = "register", allowableValues = {"register", "login"})
     private String scene;
 } 

@@ -5,6 +5,6 @@
     <update id="clearDefaultCard">
         UPDATE mobilepay.bank_card
         SET status = 2
-        WHERE user_id = #{userId} AND status = 1
+        WHERE user_id = #{userId}
     </update>
 </mapper>

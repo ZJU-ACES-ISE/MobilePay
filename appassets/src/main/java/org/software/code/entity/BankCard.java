@@ -52,7 +52,6 @@ public class BankCard implements Serializable {
     @Schema(description = "绑定时间")
     private LocalDateTime bindTime;
 
-    @TableField(exist = false)
     @Schema(description = "卡号尾号，自动从 cardNumber 中生成，仅用于展示")
     private String lastFourDigits;
 

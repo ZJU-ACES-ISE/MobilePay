@@ -150,7 +150,7 @@ public class BillsController {
      * @return 操作结果
      */
     @Operation(summary = "年度账单总览展示")
-    @GetMapping("/bills/yearSummary")
+    @GetMapping("/yearSummary")
     public Result<YearBillsSummaryVo> getYearSummary(
             @Parameter(description = "Bearer 类型 Token携带的uid", required = true)
             @RequestHeader("X-User-Id") Long userId,

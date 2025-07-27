@@ -46,7 +46,7 @@ public class CardsController {
             @RequestBody AddBankCardDto addBankCardDto
             ) {
         cardsService.addBankCard(addBankCardDto, uid);
-        return Result.success("银行卡添加成功");
+        return Result.success("银行卡添加成功", null);
     }
 
     /**
@@ -80,7 +80,7 @@ public class CardsController {
     @PostMapping("/verifyCode")
     public Result<?> verifyBankCardCode(@Valid @RequestBody VerifyBankCardCodeDto dto) {
         cardsService.verifyBankCardCode(dto);
-        return Result.success("验证码校验通过");
+        return Result.success("验证码校验通过", null);
     }
 
     /**
@@ -120,7 +120,7 @@ public class CardsController {
             @Parameter(description = "银行卡ID", required = true, example = "12345")
             @NotNull @RequestParam Long id) {
         cardsService.setDefaultCard(id);
-        return Result.success("设置默认银行卡成功");
+        return Result.success("设置默认银行卡成功", null);
     }
 
     /**
@@ -140,6 +140,6 @@ public class CardsController {
             @RequestParam Long id
     ) {
         cardsService.unbindBankCard(id);
-        return Result.success("银行卡删除成功");
+        return Result.success("银行卡删除成功", null);
     }
 }

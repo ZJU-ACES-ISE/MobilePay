@@ -30,7 +30,7 @@ public class AssetsController {
     public Result<?> topUp(
             @RequestBody @Validated BankTransferDto bankTransferDto) {
         assetsService.topUp(bankTransferDto);
-        return Result.success("余额充值成功");
+        return Result.success("余额充值成功", null);
     }
 
     /**
@@ -43,7 +43,7 @@ public class AssetsController {
     @Operation(summary = "用户余额提现", description = "输入金额并提交转入请求，校验支付密码和用户余额")
     public Result<?> withdraw(@RequestBody @Validated BankTransferDto bankTransferDto) {
         assetsService.withdraw(bankTransferDto);
-        return Result.success("余额提现成功");
+        return Result.success("余额提现成功", null);
     }
 
     /**

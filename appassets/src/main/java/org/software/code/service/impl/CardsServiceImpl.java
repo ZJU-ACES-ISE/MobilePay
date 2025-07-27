@@ -132,8 +132,7 @@ public class CardsServiceImpl implements CardsService {
         cardsMapper.clearDefaultCard(userId);
 
         // 将当前银行卡设为默认
-        card.setStatus(1); // 1 = 默认
-        cardsMapper.updateById(card);
+        cardsMapper.updateStatus(cardId);
     }
 
     @Override
