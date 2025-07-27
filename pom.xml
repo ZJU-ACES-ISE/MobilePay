@@ -12,6 +12,7 @@
         <module>gateway</module>
         <module>user</module>
         <module>appUser</module>
+        <module>admin</module>
     </modules>
 
     <dependencyManagement>

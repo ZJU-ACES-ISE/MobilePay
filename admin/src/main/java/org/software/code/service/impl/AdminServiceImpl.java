@@ -1,0 +1,284 @@
+package org.software.code.service.impl;
+
+import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.software.code.common.consts.AdminConstants;
+import org.software.code.common.except.BusinessException;
+import org.software.code.common.except.ExceptionEnum;
+import org.software.code.common.util.JwtUtil;
+import org.software.code.common.util.RedisUtil;
+import org.software.code.dto.AdminLoginDto;
+import org.software.code.entity.Admin;
+import org.software.code.mapper.AdminMapper;
+import org.software.code.service.AdminService;
+import org.software.code.vo.AdminLoginVo;
+import org.software.code.vo.AdminProfileVo;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.time.LocalDateTime;
+
+/**
+ * <p>
+ *  服务实现类
+ * </p>
+ *
+ * @author "101"计划《软件工程》实践教材案例团队
+ */
+@Service
+public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements AdminService {
+    private static final Logger logger = LoggerFactory.getLogger(AdminServiceImpl.class);
+
+    @Resource
+    private AdminMapper AdminMapper;
+
+    @Resource
+    private JwtUtil jwtUtil;
+
+    @Resource
+    private RedisUtil redisUtil;
+
+    public AdminLoginVo login(AdminLoginDto loginDto, String clientIp) {
+        // 1. 验证参数
+        if (loginDto == null || StrUtil.isBlank(loginDto.getUsername()) || StrUtil.isBlank(loginDto.getPassword())) {
+            logger.error("Login parameters invalid: username or password is empty");
+            throw new BusinessException(ExceptionEnum.REQUEST_PARAMETER_ERROR);
+        }
+
+        // 2. 检查登录失败次数
+        String failKey = AdminConstants.RedisKey.ADMIN_LOGIN_FAIL_PREFIX + loginDto.getUsername();
+        String failCountStr = redisUtil.getValue(failKey);
+        if (StrUtil.isNotBlank(failCountStr)) {
+            int failCount = Integer.parseInt(failCountStr);
+            if (failCount >= AdminConstants.DefaultValue.LOGIN_FAIL_MAX_TIMES) {
+                logger.error("Admin login fail too many times: {}, count: {}", loginDto.getUsername(), failCount);
+                throw new BusinessException(ExceptionEnum.ADMIN_LOGIN_FAIL_LIMIT);
+            }
+        }
+
+        // 3. 查询管理员信息
+        Admin admin = AdminMapper.selectOne(Wrappers.<Admin>lambdaQuery()
+                .eq(Admin::getUsername, loginDto.getUsername()));
+        if (admin == null) {
+            logger.error("Admin not found: {}", loginDto.getUsername());
+            // 记录登录失败次数
+            recordLoginFailure(failKey);
+            throw new BusinessException(ExceptionEnum.ADMIN_NOT_FOUND);
+        }
+
+        // 4. 检查账户状态
+        if (!admin.isActive()) {
+            logger.error("Admin account is not active: {}, status: {}", admin.getUsername(), admin.getStatus());
+            throw new BusinessException(ExceptionEnum.ADMIN_ACCOUNT_INACTIVE);
+        }
+        // 5. 验证密码
+        if (!new BCryptPasswordEncoder().matches(loginDto.getPassword(), admin.getPassword())) {
+            logger.error("Admin password error: {}", loginDto.getUsername());
+            // 记录登录失败次数
+            recordLoginFailure(failKey);
+            throw new BusinessException(ExceptionEnum.ADMIN_PASSWORD_ERROR);
+        }
+
+        String accessToken = jwtUtil.generateJWToken(admin.getId(), admin.getRole());
+
+        // 7. 清除登录失败记录
+        redisUtil.deleteValue(failKey);
+
+        // 8. 更新最后登录信息
+        updateLastLoginInfo(admin.getId(), LocalDateTime.now(), clientIp);
+
+        // 9. 构建响应结果
+        AdminLoginVo.AdminInfo adminInfo = AdminLoginVo.AdminInfo.builder()
+                .adminId(admin.getId())
+                .username(admin.getUsername())
+                .role(admin.getRole())
+                .lastLoginIp(admin.getLastLoginIp())
+                .build();
+
+        AdminLoginVo loginVo = AdminLoginVo.builder()
+                .accessToken(accessToken)
+                .tokenType("Bearer")
+                .expiresIn(jwtUtil.getAccessTokenExpiration())
+                .adminInfo(adminInfo)
+                .build();
+
+        logger.info("Admin login successful: {}, role: {}", loginDto.getUsername(), admin.getRole());
+        return loginVo;
+    }
+
+    public AdminProfileVo getProfileById(Long adminId) {
+        // 查询管理员信息
+        Admin admin = AdminMapper.selectById(adminId);
+        if (admin == null) {
+            logger.error("Admin not found by id: {}", adminId);
+            throw new BusinessException(ExceptionEnum.ADMIN_NOT_FOUND);
+        }
+
+        return AdminProfileVo.builder()
+                .adminId(admin.getId())
+                .username(admin.getUsername())
+                .role(admin.getRole())
+                .status(admin.getStatus())
+                .lastLoginIp(admin.getLastLoginIp())
+                .permissions(getPermissions(admin.getRole()))
+                .build();
+    }
+
+    @Override
+    public AdminLoginVo refreshToken(Long adminId, String clientIp) {
+        // 1. 验证参数
+        if (adminId == null) {
+            logger.error("Refresh token parameters invalid: adminId is null");
+            throw new BusinessException(ExceptionEnum.REQUEST_PARAMETER_ERROR);
+        }
+
+        // 2. 查询管理员信息
+        Admin admin = AdminMapper.selectById(adminId);
+        if (admin == null) {
+            logger.error("Admin not found by id: {}", adminId);
+            throw new BusinessException(ExceptionEnum.ADMIN_NOT_FOUND);
+        }
+
+        // 3. 检查账户状态
+        if (!admin.isActive()) {
+            logger.error("Admin account is not active: {}, status: {}", admin.getUsername(), admin.getStatus());
+            throw new BusinessException(ExceptionEnum.ADMIN_ACCOUNT_INACTIVE);
+        }
+
+        // 4. 生成新的token
+        String accessToken = jwtUtil.generateJWToken(admin.getId(), admin.getRole());
+
+        // 5. 更新最后登录信息
+        updateLastLoginInfo(admin.getId(), LocalDateTime.now(), clientIp);
+
+        // 6. 构建响应结果
+        AdminLoginVo.AdminInfo adminInfo = AdminLoginVo.AdminInfo.builder()
+                .adminId(admin.getId())
+                .username(admin.getUsername())
+                .role(admin.getRole())
+                .lastLoginIp(admin.getLastLoginIp())
+                .build();
+
+        AdminLoginVo loginVo = AdminLoginVo.builder()
+                .accessToken(accessToken)
+                .tokenType("Bearer")
+                .expiresIn(jwtUtil.getAccessTokenExpiration())
+                .adminInfo(adminInfo)
+                .build();
+
+        logger.info("Admin token refresh successful: {}, role: {}", admin.getUsername(), admin.getRole());
+        return loginVo;
+    }
+
+    @Override
+    public void logout(Long adminId, String clientIp) {
+        // 1. 验证参数
+        if (adminId == null) {
+            logger.error("Logout parameters invalid: adminId is null");
+            throw new BusinessException(ExceptionEnum.REQUEST_PARAMETER_ERROR);
+        }
+
+        try {
+            // 2. 查询管理员信息
+            Admin admin = AdminMapper.selectById(adminId);
+            if (admin == null) {
+                logger.warn("Admin not found during logout: {}", adminId);
+                return; // 如果管理员不存在，直接返回，不抛异常
+            }
+
+            // 3. 清除Redis中的token缓存
+            String tokenKey = AdminConstants.RedisKey.ADMIN_TOKEN_PREFIX + adminId;
+            redisUtil.deleteValue(tokenKey);
+
+            // 4. 清除refresh token缓存
+            String refreshTokenKey = AdminConstants.RedisKey.ADMIN_TOKEN_PREFIX + "refresh:" + adminId;
+            redisUtil.deleteValue(refreshTokenKey);
+
+            // 5. 记录登出日志
+            logger.info("Admin logout successful: username={}, adminId={}, ip={}", 
+                       admin.getUsername(), adminId, clientIp);
+
+        } catch (Exception e) {
+            logger.error("Admin logout error: adminId={}, ip={}, error={}", 
+                        adminId, clientIp, e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 记录登录失败次数
+     */
+    private void recordLoginFailure(String failKey) {
+        try {
+            String countStr = redisUtil.getValue(failKey);
+            int count = StrUtil.isBlank(countStr) ? 1 : Integer.parseInt(countStr) + 1;
+            redisUtil.setValue(failKey, String.valueOf(count));
+            logger.info("Record login failure: key={}, count={}", failKey, count);
+        } catch (Exception e) {
+            logger.error("Record login failure error: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 获取角色名称
+     */
+    private String getRoleName(String role) {
+        if ("SUPER_ADMIN".equals(role)) {
+            return "超级管理员";
+        } else if ("ADMIN".equals(role)) {
+            return "普通管理员";
+        }
+        return "未知角色";
+    }
+
+    /**
+     * 获取状态名称
+     */
+    private String getStatusName(String status) {
+        if ("ACTIVE".equals(status)) {
+            return "正常";
+        } else if ("INACTIVE".equals(status)) {
+            return "未激活";
+        } else if ("LOCKED".equals(status)) {
+            return "已锁定";
+        }
+        return "未知状态";
+    }
+
+    /**
+     * 获取权限列表
+     */
+    private String[] getPermissions(String role) {
+        if ("SUPER_ADMIN".equals(role)) {
+            return new String[]{
+                "admin:create", "admin:update", "admin:delete", "admin:view",
+                "user:approve", "user:reject", "user:enable", "user:disable", "user:view",
+                "site:create", "site:update", "site:delete", "site:view",
+                "device:create", "device:update", "device:delete", "device:view",
+                "discount:create", "discount:update", "discount:delete", "discount:view",
+                "statistics:view"
+            };
+        } else if ("ADMIN".equals(role)) {
+            return new String[]{
+                "user:approve", "user:reject", "user:enable", "user:disable", "user:view",
+                "site:update", "site:view",
+                "device:update", "device:view",
+                "discount:create", "discount:update", "discount:view",
+                "statistics:view"
+            };
+        }
+        return new String[]{};
+    }
+
+    public void updateLastLoginInfo(Long adminId, LocalDateTime loginTime, String loginIp) {
+        this.update(
+            Wrappers.<Admin>lambdaUpdate()
+                .set(Admin::getLastLoginTime, loginTime)
+                .set(Admin::getLastLoginIp, loginIp)
+                .eq(Admin::getId, adminId)
+        );
+    }
+}

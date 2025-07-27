@@ -2,11 +2,13 @@ package org.software.code.common.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.software.code.common.except.BusinessException;
 import org.software.code.common.except.ExceptionEnum;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 /**
@@ -21,11 +23,12 @@ public class JwtUtil {
     
     // JWT签名密钥，实际应用中应从配置文件或环境变量获取
     private static final String SECRET_KEY = "mobilepay_gateway_jwt_secret_key_2025";
-    
+
     // Token类型常量
     public static final String ACCESS_TOKEN = "access_token";
     public static final String REFRESH_TOKEN = "refresh_token";
-    
+
+
     // Claims键名常量
     private static final String CLAIM_USER_ID = "userId";
     private static final String CLAIM_ROLE = "role";
@@ -130,7 +133,7 @@ public class JwtUtil {
      */
     private static Claims extractClaims(String token) {
         return Jwts.parser()
-                .setSigningKey(SECRET_KEY)
+                .setSigningKey(SECRET_KEY.getBytes(StandardCharsets.UTF_8))
                 .parseClaimsJws(token)
                 .getBody();
     }

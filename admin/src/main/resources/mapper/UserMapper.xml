@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.software.code.mapper.UserMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="org.software.code.entity.User">
+        <id column="id" property="id" />
+        <result column="phone" property="phone" />
+        <result column="username" property="username" />
+        <result column="real_name" property="realName" />
+        <result column="id_card" property="idCard" />
+        <result column="email" property="email" />
+        <result column="password" property="password" />
+        <result column="payment_password" property="paymentPassword" />
+        <result column="avatar" property="avatar" />
+        <result column="status" property="status" />
+        <result column="balance" property="balance" />
+        <result column="created_time" property="createdTime" />
+        <result column="updated_time" property="updatedTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, phone, username, real_name, id_card, email, password, payment_password, avatar, status, balance, created_time, updated_time
+    </sql>
+
+</mapper>

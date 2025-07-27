@@ -1,0 +1,67 @@
+# ======= Server Configuration =======
+server:
+  port: <your_server_port>
+
+# ======= Spring Application Configuration =======
+spring:
+  application:
+    name: admin
+    
+  # ======= Database Configuration =======
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://<your_database_host>:<your_database_port>/<your_database_name>?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: <your_database_username>
+    password: <your_database_password>
+    
+  # ======= Nacos Service Discovery Configuration =======
+  cloud:
+    nacos:
+      discovery:
+        server-addr: <your_nacos_server_addr>
+        namespace: <your_nacos_namespace>
+        username: <your_nacos_username>
+        password: <your_nacos_password>
+        
+  # ======= Redis Cache Configuration =======
+  redis:
+    host: <your_redis_host>
+    port: <your_redis_port>
+    password: <your_redis_password>
+    
+  # ======= Cache Type Configuration =======
+  cache:
+    type: redis
+
+# ======= Internal Service Authentication Configuration =======
+app:
+  internal:
+    secret: <your_internal_secret>
+    # Enable internal service authentication (can be set to false in dev environment)
+    enabled: <your_internal_auth_enabled>
+
+# ======= MyBatis Plus Configuration =======
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  mapper-locations: classpath:mapper/*.xml
+
+# ======= Logging Configuration =======
+logging:
+  level:
+    org.software.code: <your_log_level>
+    org.springframework.security: <your_security_log_level>
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# ======= SpringDoc API Documentation Configuration =======
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  # Define API groups for easy differentiation when aggregated in gateway
+  group-configs:
+    - group: 'admin'
+      paths-to-match: '/**'
