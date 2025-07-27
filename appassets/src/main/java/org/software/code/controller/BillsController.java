@@ -5,8 +5,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.software.code.common.result.Result;
 import org.software.code.service.BillsService;
+import org.software.code.vo.BillsDetailVo;
 import org.software.code.vo.BillsListVo;
 import org.software.code.vo.BillsSummaryVo;
+import org.software.code.vo.YearBillsSummaryVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -137,6 +139,82 @@ public class BillsController {
     ) {
         List<BillsListVo> list = billsService.getBillsList(userId, null,null, null,scene,null, num);
         return Result.success(list);
+    }
+
+    /**
+     * 年度账单总览展示
+     *
+     * @param userId 用户id
+     * @param year 年份
+     *
+     * @return 操作结果
+     */
+    @Operation(summary = "年度账单总览展示")
+    @GetMapping("/bills/yearSummary")
+    public Result<YearBillsSummaryVo> getYearSummary(
+            @Parameter(description = "Bearer 类型 Token携带的uid", required = true)
+            @RequestHeader("X-User-Id") Long userId,
+            @Parameter(description = "年份，如2025", example = "2025")
+            @RequestParam(required = true) String year
+    ) {
+        YearBillsSummaryVo summary = billsService.getYearSummary(userId, year);
+        return Result.success(summary);
+    }
+
+    /**
+     * 年度账单总览展示
+     *
+     * @param id 账单主键 ID
+     *
+     * @return 操作结果
+     */
+    @Operation(summary = "根据 ID 获取账单详情")
+    @GetMapping("/detail")
+    public Result<BillsDetailVo> getBillDetail(
+            @Parameter(description = "账单主键 ID", required = true)
+            @RequestParam Long id) {
+        BillsDetailVo detailVo = billsService.getBillsDetailById(id);
+        return Result.success(detailVo);
+    }
+
+    /**
+     * 修改账单备注
+     *
+     * @param id 账单主键 ID
+     * @param remark 备注内容
+     *
+     * @return 操作结果
+     */
+    @Operation(summary = "修改账单备注")
+    @PutMapping("/remark")
+    public Result<?> updateRemark(
+            @Parameter(description = "账单主键ID", required = true, example = "100001")
+            @RequestParam Long id,
+            @Parameter(description = "备注内容", required = true, example = "备注内容")
+            @RequestParam String remark) {
+
+        billsService.updateRemarkById(id, remark);
+        return Result.success("账单备注修改成功", null);
+    }
+
+    /**
+     * 修改账单支出分类
+     *
+     * @param id 账单主键 ID
+     * @param bizCatogry 交易分类
+     *
+     * @return 操作结果
+     */
+    @Operation(summary = "修改账单支出分类")
+    @PutMapping("/bizCatogry")
+    public Result<?> updateBizCategory(
+            @Parameter(description = "账单流水ID", required = true)
+            @RequestParam Long id,
+            @Parameter(description = "交易分类（1=餐饮，2=出行，3=购物，4=其他）", required = true)
+            @RequestParam Integer bizCatogry) {
+
+        billsService.updateBizCategoryById(id, bizCatogry);
+        return Result.success("账单类别修改成功", null);
     }
 
 }
