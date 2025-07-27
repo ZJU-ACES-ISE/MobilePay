@@ -1,22 +1,23 @@
 # ======= 服务器相关配置 =======
 server:
-  port: 8090
+  port: 8082
 spring:
   application:
     name: gateway
   cloud:
     nacos:
       config:
-        server-addr: localhost:8848
+        server-addr: graywolf.top:6202
         namespace: public
-        # username: nacos  # 如有需要请取消注释并填写正确的用户名
-        # password: nacos  # 如有需要请取消注释并填写正确的密码
-        file-extension: yaml
+        username: nacos
+        password: mobilepay250715
+
       discovery:
-        server-addr: localhost:8848
+        server-addr: graywolf.top:6202
         namespace: public
-        # username: nacos  # 如有需要请取消注释并填写正确的用户名
-        # password: nacos  # 如有需要请取消注释并填写正确的密码
+        username: nacos
+        password: mobilepay250715
+
     gateway:
       routes:
         - id: appUser
@@ -24,7 +25,7 @@ spring:
           predicates:
             - Path=/app/**
           filters:
-           - StripPrefix=1
+            - StripPrefix=1
         - id: appUser-api-doc
           uri: lb://appUser
           predicates:
