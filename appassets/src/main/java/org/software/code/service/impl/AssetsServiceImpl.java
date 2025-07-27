@@ -212,7 +212,7 @@ public class AssetsServiceImpl implements AssetsService {
                 .forEach(entry -> {
                     AssertsChartItemVo item = new AssertsChartItemVo();
                     item.setDay(entry.getKey().format(displayFormatter));
-                    item.setTotal_expense(entry.getValue().toPlainString());
+                    item.setBalance(entry.getValue().toPlainString());
                     chartList.add(item);
                 });
 

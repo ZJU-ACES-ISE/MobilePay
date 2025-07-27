@@ -11,5 +11,5 @@ public class AssertsChartItemVo {
     private String day;
 
     @Schema(description = "对应日期的余额（元）", example = "1200.50")
-    private String total_expense;
+    private String balance;
 }
