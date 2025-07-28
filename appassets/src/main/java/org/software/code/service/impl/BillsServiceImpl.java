@@ -104,7 +104,7 @@ public class BillsServiceImpl implements BillsService {
         }
 
         BillsSummaryVo summary = new BillsSummaryVo();
-        summary.setId(userId);
+        summary.setId(String.valueOf(userId));
         summary.setTotalIncome(totalIncome.toPlainString());
         summary.setTotalExpense(totalExpense.toPlainString());
         summary.setBalance(balance.toPlainString());
@@ -145,7 +145,7 @@ public class BillsServiceImpl implements BillsService {
 
         return records.stream().map(record -> {
             BillsListVo vo = new BillsListVo();
-            vo.setId(record.getId());
+            vo.setId(String.valueOf(record.getId()));
             vo.setType(record.getType());
             vo.setTypeName(getTypeName(record.getType()));
             vo.setBizCategory(record.getBizCategory());
@@ -220,7 +220,7 @@ public class BillsServiceImpl implements BillsService {
                 }).collect(Collectors.toList());
 
         YearBillsSummaryVo vo = new YearBillsSummaryVo();
-        vo.setId(userId);
+        vo.setId(String.valueOf(userId));
         vo.setTotalIncome(totalIncome.toPlainString());
         vo.setTotalExpense(totalExpense.toPlainString());
         vo.setTotalCount(totalCount);
@@ -238,7 +238,7 @@ public class BillsServiceImpl implements BillsService {
         }
 
         BillsDetailVo vo = new BillsDetailVo();
-        vo.setId(record.getId());
+        vo.setId(String.valueOf(record.getId()));
         vo.setTransferNumber(record.getTransferNumber());
         vo.setType(record.getType());
         vo.setTypeName(getTypeName(record.getType()));

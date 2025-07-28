@@ -9,8 +9,9 @@ import java.util.List;
 @Data
 public class BalanceSummaryVo {
 
+
     @Schema(description = "用户余额唯一标识", example = "1")
-    private Long id;
+    private String id;
 
     @Schema(description = "余额（元）", example = "1200.50")
     private String balance;

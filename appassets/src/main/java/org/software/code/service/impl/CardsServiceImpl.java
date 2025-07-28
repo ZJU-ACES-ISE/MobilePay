@@ -108,7 +108,7 @@ public class CardsServiceImpl implements CardsService {
 
         return cards.stream().map(card -> {
             CardsShowVo vo = new CardsShowVo();
-            vo.setId(card.getId());
+            vo.setId(String.valueOf(card.getId()));
             vo.setCardPhone(card.getCardPhone());
             vo.setBankName(card.getBankName());
             vo.setType(card.getType());

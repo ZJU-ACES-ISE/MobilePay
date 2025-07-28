@@ -9,7 +9,7 @@ import java.util.List;
 @Schema(description = "年度账单汇总视图")
 public class YearBillsSummaryVo {
     @Schema(description = "用户唯一标识", example = "123456789")
-    private Long id;
+    private String id;
 
     @Schema(description = "总收入", example = "180000.75")
     private String totalIncome;

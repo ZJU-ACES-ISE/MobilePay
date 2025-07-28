@@ -12,7 +12,7 @@ import lombok.Data;
 public class CardsShowVo {
 
     @Schema(description = "银行卡唯一标识", example = "1234567890")
-    private Long id;
+    private String id;
 
     @Schema(description = "银行预留手机号", example = "15717798453")
     private String cardPhone;
