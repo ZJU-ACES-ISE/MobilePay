@@ -168,7 +168,6 @@ public class AssetsServiceImpl implements AssetsService {
         for (int i = 0; i <= 6; i++) {
             LocalDate day = today.minusDays(i);
             String redisKey = "balance:history:" + userId + ":" + day.format(redisKeyFormatter);
-            String displayDate = day.format(displayFormatter);
 
             String cached = redisUtil.getValue(redisKey);
             BigDecimal dayBalance;
@@ -218,7 +217,7 @@ public class AssetsServiceImpl implements AssetsService {
 
         // 组装 VO
         BalanceSummaryVo vo = new BalanceSummaryVo();
-        vo.setId(userBalance.getId());
+        vo.setId(String.valueOf(userBalance.getId()));
         vo.setBalance(userBalance.getBalance().toPlainString());
         vo.setUpdateTime(userBalance.getUpdateTime().toString());
         vo.setAssertsChartV0(chartList);

@@ -10,7 +10,7 @@ import java.util.List;
 public class BillsSummaryVo {
 
     @Schema(description = "用户唯一标识")
-    private Long id;
+    private String id;
 
     @Schema(description = "本月总收入", example = "800.00")
     private String totalIncome;

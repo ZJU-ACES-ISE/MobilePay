@@ -8,7 +8,7 @@ import lombok.Data;
 public class BillsListVo {
 
     @Schema(description = "交易流水 ID", example = "10001")
-    private Long id;
+    private String id;
 
     @Schema(description = "交易类型：1=收入，2=转出", example = "1")
     private Integer type;
