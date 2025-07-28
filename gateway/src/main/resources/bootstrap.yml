@@ -2,6 +2,10 @@
 server:
   port: 8082
 spring:
+  redis:
+    host: graywolf.top
+    port: 6201
+    password: mobilepay250715
   application:
     name: gateway
   cloud:
@@ -17,7 +21,6 @@ spring:
         namespace: public
         username: nacos
         password: mobilepay250715
-
     gateway:
       routes:
         - id: appUser
@@ -44,6 +47,18 @@ spring:
           uri: lb://admin
           predicates:
             - Path=/admin/**
+          filters:
+            - StripPrefix=1
+        - id: appassests
+          uri: lb://appassets
+          predicates:
+            - Path=/appassets/**
+          filters:
+            - StripPrefix=1
+        - id: payment
+          uri: lb://payment
+          predicates:
+            - Path=/payment/**
           filters:
             - StripPrefix=1
       globalcors:
@@ -74,3 +89,7 @@ springdoc:
         url: /user/v3/api-docs
       - name: admin
         url: /admin/v3/api-docs
+      - name: appassests
+        url: /appaseests/v3/api-docs
+      - name: payment
+        url: /payment/v3/api-docs

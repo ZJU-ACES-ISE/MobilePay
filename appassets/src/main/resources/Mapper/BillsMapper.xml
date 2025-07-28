@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.software.code.mapper.BillsMapper">
+    <select id="sumAmountByUserIdAndTypeAndTime" resultType="java.math.BigDecimal">
+        SELECT IFNULL(SUM(amount), 0)
+        FROM transfer_record
+        WHERE user_id = #{userId}
+          AND type = #{type}
+          AND complete_time BETWEEN #{start} AND #{end}
+    </select>
+</mapper>

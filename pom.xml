@@ -10,9 +10,10 @@
     <packaging>pom</packaging>
     <modules>
         <module>gateway</module>
-        <module>user</module>
+        <module>payment</module>
         <module>appUser</module>
         <module>admin</module>
+        <module>appassets</module>
     </modules>
 
     <dependencyManagement>

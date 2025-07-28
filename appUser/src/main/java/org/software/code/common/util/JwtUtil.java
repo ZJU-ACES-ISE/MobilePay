@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import org.software.code.common.except.BusinessException;
 import org.software.code.common.except.ExceptionEnum;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,9 +32,6 @@ public class JwtUtil {
     private static final String CLAIM_USER_ID = "userId";
     private static final String CLAIM_ROLE = "role";
     private static final String CLAIM_TOKEN_TYPE = "tokenType";
-    
-    // Bearer前缀
-    private static final String BEARER_PREFIX = "Bearer ";
 
     /**
      * 生成访问令牌
@@ -53,35 +51,12 @@ public class JwtUtil {
                 .setSubject(Long.toString(userId)) // 兼容旧版本
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
+                .signWith(SignatureAlgorithm.HS256, SECRET_KEY.getBytes(StandardCharsets.UTF_8))
                 .compact();
         
-        return BEARER_PREFIX + token;
+        return token;
     }
-    
-    /**
-     * 生成刷新令牌
-     *
-     * @param userId 用户ID
-     * @param expirationTime 过期时间（毫秒）
-     * @return JWT令牌字符串，包含"Bearer "前缀
-     */
-    public static String generateRefreshToken(long userId, long expirationTime) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put(CLAIM_USER_ID, userId);
-        claims.put(CLAIM_ROLE, "user");
-        claims.put(CLAIM_TOKEN_TYPE, REFRESH_TOKEN);
-        
-        String token = Jwts.builder()
-                .setClaims(claims)
-                .setSubject(Long.toString(userId)) // 兼容旧版本
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
-                .compact();
-        
-        return BEARER_PREFIX + token;
-    }
+
     /**
      * 从Token中提取用户ID
      *
@@ -91,11 +66,6 @@ public class JwtUtil {
      */
     public static Long extractID(String token) throws BusinessException {
         try {
-            // 移除Bearer前缀
-            if (token.startsWith(BEARER_PREFIX)) {
-                token = token.substring(BEARER_PREFIX.length());
-            }
-            
             Claims claims = extractClaims(token);
             Object userIdObj = claims.get(CLAIM_USER_ID);
             if (userIdObj != null) {
@@ -132,13 +102,8 @@ public class JwtUtil {
      * @return Claims对象
      */
     private static Claims extractClaims(String token) {
-        // 移除Bearer前缀
-        if (token.startsWith(BEARER_PREFIX)) {
-            token = token.substring(BEARER_PREFIX.length());
-        }
-        
         return Jwts.parser()
-                .setSigningKey(SECRET_KEY)
+                .setSigningKey(SECRET_KEY.getBytes(StandardCharsets.UTF_8))
                 .parseClaimsJws(token)
                 .getBody();
     }

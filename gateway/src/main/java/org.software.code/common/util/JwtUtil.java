@@ -108,22 +108,6 @@ public class JwtUtil {
         }
     }
 
-    /**
-     * 验证Token是否为指定类型
-     *
-     * @param token JWT Token字符串
-     * @param expectedType 期望的Token类型
-     * @return 是否匹配
-     */
-    public static boolean validateTokenType(String token, String expectedType) {
-        try {
-            String tokenType = extractTokenType(token);
-            return expectedType.equals(tokenType);
-        } catch (Exception e) {
-            logger.warn("Token type validation failed: {}, error: {}", token, e.getMessage());
-            return false;
-        }
-    }
 
     /**
      * 提取Token中的Claims

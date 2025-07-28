@@ -45,7 +45,7 @@ public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
 
     @Resource
     private ObjectMapper objectMapper;
-    
+
     @Resource
     private RedisUtil redisUtil;
     @Value("${app.internal.secret}")
@@ -95,7 +95,13 @@ public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
                         logger.warn("Token validation failed for path: {}", path);
                         return handleAuthError(exchange, ExceptionEnum.TOKEN_EXPIRED);
                     }
-                    
+
+                    // 检查token是否在黑名单中
+                    if (redisUtil.isTokenBlacklisted(token)) {
+                        logger.warn("Token is blacklisted for path: {}", path);
+                        return handleAuthError(exchange, ExceptionEnum.TOKEN_EXPIRED);
+                    }
+
                     return addUserInfoToRequest(exchange, token, chain);
                 })
                 .onErrorResume(throwable -> {
