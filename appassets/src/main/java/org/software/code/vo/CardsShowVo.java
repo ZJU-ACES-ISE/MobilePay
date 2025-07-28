@@ -14,6 +14,9 @@ public class CardsShowVo {
     @Schema(description = "银行卡唯一标识", example = "1234567890")
     private Long id;
 
+    @Schema(description = "银行预留手机号", example = "15717798453")
+    private String cardPhone;
+
     @Schema(description = "银行名称（如“招商银行”）", example = "招商银行")
     private String bankName;
 
