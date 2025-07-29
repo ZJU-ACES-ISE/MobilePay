@@ -9,6 +9,7 @@ import org.software.code.common.annotation.AdminRole;
 import org.software.code.common.except.BusinessException;
 import org.software.code.common.result.Result;
 import org.software.code.dto.AdminLoginDto;
+import org.software.code.dto.RefreshTokenDto;
 import org.software.code.service.AdminService;
 import org.software.code.vo.AdminLoginVo;
 import org.software.code.vo.AdminProfileVo;
@@ -156,30 +157,32 @@ public class AdminController {
      * 
      * <p>刷新机制：</p>
      * <ul>
+     *   <li>验证Refresh Token的有效性和格式</li>
      *   <li>验证当前管理员账户状态（必须为激活状态）</li>
      *   <li>生成新的Access Token和Refresh Token</li>
+     *   <li>轮换Refresh Token以增强安全性</li>
      *   <li>更新最后登录时间和IP地址</li>
      *   <li>返回新的token信息和管理员基本信息</li>
      * </ul>
      * 
      * <p>安全注意：刷新token的有效期通常比access token更长，但也有过期时间限制。</p>
      *
-     * @param adminId 管理员ID，通过请求头X-User-Id传递
-     * @param request HTTP请求对象，用于获取客户端IP地址
+     * @param refreshTokenDto 刷新Token请求参数，包含refreshToken
+     * @param httpRequest HTTP请求对象，用于获取客户端IP地址
      * @return 新的JWT tokens和管理员信息
-     * @throws BusinessException 当管理员不存在或账户未激活时抛出
+     * @throws BusinessException 当Refresh Token无效、过期或管理员账户异常时抛出
+     * @see RefreshTokenDto 刷新请求参数说明
      * @see AdminLoginVo 刷新响应数据说明
      */
     @PostMapping("/refresh")
-    @Operation(summary = "刷新Token", description = "刷新JWT token")
-    @AdminRole()
-    public Result<?> refreshToken(@RequestHeader("X-User-Id") String adminId,
-                                           HttpServletRequest request) {
-        String clientIp = getClientIpAddress(request);
+    @Operation(summary = "刷新Token", description = "使用Refresh Token获取新的Access Token")
+    public Result<?> refreshToken(@Valid @RequestBody RefreshTokenDto refreshTokenDto,
+                                  HttpServletRequest httpRequest) {
+        String clientIp = getClientIpAddress(httpRequest);
         
-        AdminLoginVo loginVo = adminService.refreshToken(Long.parseLong(adminId), clientIp);
+        AdminLoginVo loginVo = adminService.refreshToken(refreshTokenDto.getRefreshToken(), clientIp);
         
-        logger.info("Admin token refresh successful: {}, ip: {}", adminId, clientIp);
+        logger.info("Admin token refresh successful, ip: {}", clientIp);
         return Result.success(loginVo);
     }
 

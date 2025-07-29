@@ -66,7 +66,7 @@ public interface AdminService extends IService<Admin> {
      */
     AdminProfileVo getProfileById(Long adminId);
 
-      /**
+    /**
      * 刷新JWT令牌方法
      *
      * <p>此方法用于在访问令牌即将过期时，使用刷新令牌生成新的访问令牌，
@@ -74,12 +74,12 @@ public interface AdminService extends IService<Admin> {
      *
      * <p>刷新过程中会重新验证管理员账户状态，确保令牌刷新时账户仍然有效。</p>
      *
-     * @param adminId 管理员ID
+     * @param refreshToken Refresh Token字符串
      * @param clientIp 客户端IP地址，用于安全审计
      * @return 新的JWT令牌和管理员信息
-     * @throws BusinessException 当管理员不存在或账户状态异常时抛出
+     * @throws BusinessException 当Refresh Token无效或管理员账户状态异常时抛出
      */
-    AdminLoginVo refreshToken(Long adminId, String clientIp);
+    AdminLoginVo refreshToken(String refreshToken, String clientIp);
 
 
     /**

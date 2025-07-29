@@ -25,16 +25,28 @@ public class AdminLoginVo {
     private String accessToken;
 
     /**
+     * 刷新token
+     */
+    @JsonProperty("refresh_token")
+    private String refreshToken;
+
+    /**
      * token类型
      */
     @JsonProperty("token_type")
     private String tokenType = "Bearer";
 
     /**
-     * 访问token过期时间（毫秒）
+     * 访问token过期时间（秒）
      */
     @JsonProperty("expires_in")
     private Long expiresIn;
+
+    /**
+     * 刷新token过期时间（秒）
+     */
+    @JsonProperty("refresh_expires_in")
+    private Long refreshExpiresIn;
 
     /**
      * 管理员信息
