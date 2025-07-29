@@ -4,11 +4,31 @@ server:
 
 # ======= Spring 应用相关配置 =======
 spring:
+  # ======= Kafka 消息队列配置 =======
+  kafka:
+    bootstrap-servers: <your-kafka-bootstrap-servers>
+    security:
+      protocol: SASL_PLAINTEXT
+    properties:
+      sasl.mechanism: PLAIN
+      sasl.jaas.config: >
+        org.apache.kafka.common.security.plain.PlainLoginModule required
+        username="<your-kafka-username>"
+        password="<your-kafka-password>";
+      security.protocol: SASL_PLAINTEXT
+    consumer:
+      group-id: <your-kafka-group-id>
+      auto-offset-reset: earliest
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
   application:
     name: user
 
   # ======= 数据库配置 =======
   datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://<your-database-host>:<your-database-port>/mobilepay?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: <your-database-username>
     password: <your-database-password>
@@ -31,3 +51,14 @@ spring:
   # ======= 缓存类型配置 =======
   cache:
     type: redis
+
+# ======= SpringDoc API文档配置 =======
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  # 定义API分组，方便在网关聚合时区分
+  group-configs:
+    - group: 'user'
+      paths-to-match: '/**'
