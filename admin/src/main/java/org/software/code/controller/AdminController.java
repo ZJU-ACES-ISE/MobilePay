@@ -139,10 +139,11 @@ public class AdminController {
     @Operation(summary = "管理员退出", description = "管理员退出登录，清除token")
     @AdminRole()
     public Result<?> logout(@RequestHeader("X-User-Id") String adminId,
+                           @RequestHeader("Authorization") String token,
                            HttpServletRequest request) {
         String clientIp = getClientIpAddress(request);
         
-        adminService.logout(Long.parseLong(adminId), clientIp);
+        adminService.logout(Long.parseLong(adminId), token, clientIp);
         
         logger.info("Admin logout successful: {}, ip: {}", adminId, clientIp);
         return Result.success();

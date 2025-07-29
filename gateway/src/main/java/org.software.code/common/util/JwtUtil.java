@@ -9,6 +9,7 @@ import org.software.code.common.except.BusinessException;
 import org.software.code.common.except.ExceptionEnum;
 
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Date;
 
 /**
@@ -84,6 +85,30 @@ public class JwtUtil {
         }
     }
 
+    /**
+     * 对Token进行SHA-256哈希
+     *
+     * @param token JWT Token字符串
+     * @return 哈希值
+     */
+    public static String hashToken(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (Exception e) {
+            logger.error("Error hashing token: {}", e.getMessage());
+            return String.valueOf(token.hashCode());
+        }
+    }
 
     /**
      * 提取Token中的Claims

@@ -175,7 +175,7 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements
     }
 
     @Override
-    public void logout(Long adminId, String clientIp) {
+    public void logout(Long adminId, String token, String clientIp) {
         // 1. 验证参数
         if (adminId == null) {
             logger.error("Logout parameters invalid: adminId is null");
@@ -190,15 +190,29 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements
                 return; // 如果管理员不存在，直接返回，不抛异常
             }
 
-            // 3. 清除Redis中的token缓存
+            // 3. 如果提供了token，将其添加到Gateway黑名单
+            if (token != null && !token.trim().isEmpty()) {
+                try {
+                    String tokenHash = JwtUtil.hashToken(token);
+                    // 计算token剩余有效时间（24小时 - 已过时间）
+                    long ttlSeconds = jwtUtil.getAccessTokenExpiration();
+                    redisUtil.addTokenToBlacklist(tokenHash, adminId, ttlSeconds);
+                    logger.info("Token added to Gateway blacklist: adminId={}, tokenHash={}", adminId, tokenHash);
+                } catch (Exception e) {
+                    logger.error("Failed to add token to Gateway blacklist: adminId={}, error={}", adminId, e.getMessage());
+                    // 继续执行其他登出逻辑，不因黑名单失败而中断
+                }
+            }
+
+            // 4. 清除Redis中的token缓存
             String tokenKey = AdminConstants.RedisKey.ADMIN_TOKEN_PREFIX + adminId;
             redisUtil.deleteValue(tokenKey);
 
-            // 4. 清除refresh token缓存
+            // 5. 清除refresh token缓存
             String refreshTokenKey = AdminConstants.RedisKey.ADMIN_TOKEN_PREFIX + "refresh:" + adminId;
             redisUtil.deleteValue(refreshTokenKey);
 
-            // 5. 记录登出日志
+            // 6. 记录登出日志
             logger.info("Admin logout successful: username={}, adminId={}, ip={}", 
                        admin.getUsername(), adminId, clientIp);
 

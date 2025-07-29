@@ -20,19 +20,6 @@ public class RedisUtil {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
-
-        /**
-     * 向 Redis 中设置带过期时间的键值对
-     *
-     * @param key 要设置的键，类型为字符串
-     * @param value 要设置的值，类型为字符串
-     * @param timeout 过期时间
-     * @param unit 时间单位
-     */
-    public void setValue(String key, String value, long timeout, java.util.concurrent.TimeUnit unit) {
-        stringRedisTemplate.opsForValue().set(key, value, timeout, unit);
-    }
-
     /**
      * 向 Redis 中设置键值对的方法。
      * 使用 StringRedisTemplate 的 opsForValue() 方法获取操作字符串类型值的对象，
@@ -42,9 +29,19 @@ public class RedisUtil {
      * @param value 要设置的值，类型为字符串
      */
     public void setValue(String key, String value) {
-        // 调用 StringRedisTemplate 的 opsForValue() 方法获取操作字符串类型值的对象
-        // 再调用其 set() 方法将键和值存储到 Redis 中
         stringRedisTemplate.opsForValue().set(key, value);
+    }
+
+    /**
+     * 向 Redis 中设置带过期时间的键值对
+     *
+     * @param key 要设置的键，类型为字符串
+     * @param value 要设置的值，类型为字符串
+     * @param timeout 过期时间
+     * @param unit 时间单位
+     */
+    public void setValue(String key, String value, long timeout, java.util.concurrent.TimeUnit unit) {
+        stringRedisTemplate.opsForValue().set(key, value, timeout, unit);
     }
 
     /**
@@ -68,11 +65,10 @@ public class RedisUtil {
      * @param key 要删除的键，类型为字符串
      */
     public void deleteValue(String key) {
-        // 调用 StringRedisTemplate 的 delete() 方法根据键从 Redis 中删除对应的键值对
         stringRedisTemplate.delete(key);
     }
 
-        /**
+    /**
      * 检查Token是否在黑名单中
      *
      * @param tokenHash token的哈希值

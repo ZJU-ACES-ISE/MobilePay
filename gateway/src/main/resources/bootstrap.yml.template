@@ -7,6 +7,16 @@ spring:
   application:
     name: gateway
     
+  # ======= Redis Cache Configuration =======
+  redis:
+    host: <your_redis_host>
+    port: <your_redis_port>
+    password: <your_redis_password>
+    
+  # ======= Cache Type Configuration =======
+  cache:
+    type: redis
+    
   # ======= Spring Cloud Configuration =======
   cloud:
     nacos:

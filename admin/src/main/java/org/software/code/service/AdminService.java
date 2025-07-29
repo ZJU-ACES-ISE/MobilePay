@@ -82,13 +82,14 @@ public interface AdminService extends IService<Admin> {
     AdminLoginVo refreshToken(Long adminId, String clientIp);
 
 
-        /**
+    /**
      * 管理员登出方法
      *
      * <p>此方法处理管理员的登出请求，清理相关的会话数据和缓存信息。</p>
      *
      * <p>登出操作包括：</p>
      * <ul>
+     *   <li>将JWT令牌添加到Gateway黑名单</li>
      *   <li>清除Redis中的JWT令牌缓存</li>
      *   <li>清除刷新令牌缓存</li>
      *   <li>记录登出操作日志</li>
@@ -98,8 +99,9 @@ public interface AdminService extends IService<Admin> {
      * <p>此方法设计为幂等操作，多次调用不会产生副作用。</p>
      *
      * @param adminId 管理员ID
+     * @param token JWT令牌，将被添加到黑名单
      * @param clientIp 客户端IP地址，用于日志记录
      */
-    void logout(Long adminId, String clientIp);
+    void logout(Long adminId, String token, String clientIp);
 
 }

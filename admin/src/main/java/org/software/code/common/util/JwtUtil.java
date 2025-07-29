@@ -2,9 +2,12 @@ package org.software.code.common.util;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,6 +19,8 @@ import java.util.Map;
  */
 @Component
 public class JwtUtil {
+
+    private static final Logger logger = LoggerFactory.getLogger(JwtUtil.class);
 
     // 与网关保持一致的签名密钥
     private static final String SECRET_KEY = "mobilepay_gateway_jwt_secret_key_2025";
@@ -61,5 +66,28 @@ public class JwtUtil {
         return ACCESS_TOKEN_EXPIRATION / 1000;
     }
 
-
+    /**
+     * 对Token进行SHA-256哈希
+     *
+     * @param token JWT Token字符串
+     * @return 哈希值
+     */
+    public static String hashToken(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (Exception e) {
+            logger.error("Error hashing token: {}", e.getMessage());
+            return String.valueOf(token.hashCode());
+        }
+    }
 }
