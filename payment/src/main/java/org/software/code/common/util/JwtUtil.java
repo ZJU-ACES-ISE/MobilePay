@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.software.code.common.except.BusinessException;
 import org.software.code.common.except.ExceptionEnum;
+import org.springframework.stereotype.Component;
 
 import java.util.Date;
 /**
@@ -17,6 +18,7 @@ import java.util.Date;
  *
  * @author “101”计划《软件工程》实践教材案例团队
  */
+@Component
 public class JwtUtil {
 
     // 创建一个日志记录器，用于记录与 JWT 操作相关的日志信息

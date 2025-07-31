@@ -17,6 +17,7 @@ import java.util.Map;
  * JWTUtil 是一个工具类，用于处理 JSON Web Token（JWT）的生成操作。
  * 验证功能由网关统一处理，此类主要负责生成Token。
  */
+
 public class JwtUtil {
 
     private static final Logger logger = LogManager.getLogger(JwtUtil.class);
