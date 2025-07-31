@@ -117,9 +117,7 @@ public class UserListVo {
      * 获取用户类型名称
      */
     public String getUserTypeName() {
-        if ("VIP".equals(this.userType)) {
-            return "VIP用户";
-        } else if ("NORMAL".equals(this.userType)) {
+        if ("NORMAL".equals(this.userType)) {
             return "普通用户";
         }
         return "未知类型";

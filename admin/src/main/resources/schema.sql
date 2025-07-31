@@ -60,6 +60,7 @@ CREATE TABLE site (
     longitude DECIMAL(10,6) COMMENT '经度',
     latitude DECIMAL(10,6) COMMENT '纬度',
     address VARCHAR(200) COMMENT '地址',
+    type VARBINARY(50) COMMENT '类型：SUBWAY, BUS',
     status VARCHAR(20) DEFAULT 'ACTIVE' COMMENT '状态: ACTIVE, INACTIVE, MAINTENANCE',
     created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
@@ -75,6 +76,7 @@ CREATE TABLE turnstile_device (
     status VARCHAR(20) DEFAULT 'ACTIVE' COMMENT '状态: ACTIVE, INACTIVE, OFFLINE, MAINTENANCE',
     last_heartbeat TIMESTAMP NULL COMMENT '最后心跳时间',
     firmware_version VARCHAR(50) COMMENT '固件版本',
+    type VARBINARY(50) COMMENT '类型：SUBWAY, BUS',
     created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     INDEX idx_site_id (site_id),
@@ -136,7 +138,7 @@ CREATE TABLE scan_record (
 -- 折扣策略表
 CREATE TABLE discount_strategy (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    strategy_name VARCHAR(100) NOT NULL COMMENT '策略名称',
+    strategy_name VARCHAR(100) NOT NULL COMMENT '                                           策略名称',
     strategy_type VARCHAR(20) NOT NULL COMMENT '策略类型: TRAVEL, PAYMENT, NEW_USER, HOLIDAY',
     discount_type VARCHAR(20) NOT NULL COMMENT '折扣类型: PERCENTAGE, FIXED_AMOUNT, LADDER',
     discount_rate DECIMAL(5,2) COMMENT '折扣率(百分比)',
@@ -6309,11 +6311,11 @@ INSERT INTO turnstile_device (device_code, site_id, device_type, device_name, st
 ('TSL13305601', 3056, 'ENTRY', '西三教-entry闸机1', 'ACTIVE', 'v2.0.8'),
 ('TSL13305701', 3057, 'BOTH', '石家庄站-both闸机1', 'ACTIVE', 'v1.9.5');
 
--- 插入测试用户数据
-INSERT INTO user (phone, username, real_name, email, status, balance) VALUES
-('13800138001', 'testuser1', '张三', 'zhang.san@example.com', 'APPROVED', 100.00),
-('13800138002', 'testuser2', '李四', 'li.si@example.com', 'PENDING', 0.00),
-('13800138003', 'testuser3', '王五', 'wang.wu@example.com', 'APPROVED', 500.00);
+# -- 插入测试用户数据
+# INSERT INTO user (phone, username, real_name, email, status, balance) VALUES
+# ('13800138001', 'testuser1', '张三', 'zhang.san@example.com', 'APPROVED', 100.00),
+# ('13800138002', 'testuser2', '李四', 'li.si@example.com', 'PENDING', 0.00),
+# ('13800138003', 'testuser3', '王五', 'wang.wu@example.com', 'APPROVED', 500.00);
 
 -- 插入测试折扣策略数据
 INSERT INTO discount_strategy (strategy_name, strategy_type, discount_type, discount_rate, min_amount, max_discount, target_cities, start_time, end_time, usage_limit, status, created_by) VALUES

@@ -50,6 +50,9 @@ public class TurnstileDevice implements Serializable {
     @TableField("firmware_version")
     private String firmwareVersion;
 
+    @TableField("type")
+    private String type;
+
     @TableField("created_time")
     private Date createdTime;
 

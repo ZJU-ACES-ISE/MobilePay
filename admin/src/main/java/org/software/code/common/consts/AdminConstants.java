@@ -87,6 +87,14 @@ public class AdminConstants {
     }
 
     /**
+     * 交通类型常量
+     */
+    public static final class TransportType {
+        public static final String SUBWAY = "SUBWAY";
+        public static final String BUS = "BUS";
+    }
+
+    /**
      * 折扣策略状态常量
      */
     public static final class DiscountStrategyStatus {

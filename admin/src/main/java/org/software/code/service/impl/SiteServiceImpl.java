@@ -70,6 +70,11 @@ public class SiteServiceImpl extends ServiceImpl<SiteMapper, Site> implements Si
                 wrapper.eq(Site::getLineName, searchDto.getLineName());
             }
             
+            // 交通类型过滤
+            if (StringUtils.hasText(searchDto.getType())) {
+                wrapper.eq(Site::getType, searchDto.getType());
+            }
+            
             // 创建时间范围过滤
             if (searchDto.getStartTime() != null) {
                 wrapper.ge(Site::getCreatedTime, java.sql.Timestamp.valueOf(searchDto.getStartTime()));
@@ -411,6 +416,7 @@ public class SiteServiceImpl extends ServiceImpl<SiteMapper, Site> implements Si
                 .contactPhone(null) // Not available in Site entity
                 .status(site.getStatus())
                 .siteType(null) // Not available in Site entity
+                .type(site.getType())
                 .city(site.getCity())
                 .lineName(site.getLineName())
                 .longitude(site.getLongitude())
@@ -434,6 +440,7 @@ public class SiteServiceImpl extends ServiceImpl<SiteMapper, Site> implements Si
                 .contactPhone(null) // Not available in Site entity
                 .status(site.getStatus())
                 .siteType(null) // Not available in Site entity
+                .type(site.getType())
                 .description(null) // Not available in Site entity
                 .city(site.getCity())
                 .lineName(site.getLineName())

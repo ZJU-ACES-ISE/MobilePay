@@ -79,6 +79,18 @@ public class DeviceListVo {
     private String statusName;
 
     /**
+     * 交通类型
+     */
+    @JsonProperty("type")
+    private String type;
+
+    /**
+     * 交通类型名称
+     */
+    @JsonProperty("type_name")
+    private String typeName;
+
+    /**
      * 最后心跳时间
      */
     @JsonProperty("last_heartbeat")
@@ -148,5 +160,17 @@ public class DeviceListVo {
             return "故障";
         }
         return "未知状态";
+    }
+
+    /**
+     * 获取交通类型名称
+     */
+    public String getTypeName() {
+        if ("SUBWAY".equals(this.type)) {
+            return "地铁";
+        } else if ("BUS".equals(this.type)) {
+            return "公交";
+        }
+        return "未知类型";
     }
 }

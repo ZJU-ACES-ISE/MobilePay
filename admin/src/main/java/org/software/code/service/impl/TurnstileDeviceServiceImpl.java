@@ -79,6 +79,11 @@ public class TurnstileDeviceServiceImpl extends ServiceImpl<TurnstileDeviceMappe
                 wrapper.eq(TurnstileDevice::getDeviceType, searchDto.getDeviceType());
             }
             
+            // 交通类型过滤
+            if (StringUtils.hasText(searchDto.getType())) {
+                wrapper.eq(TurnstileDevice::getType, searchDto.getType());
+            }
+            
             // 固件版本过滤
             if (StringUtils.hasText(searchDto.getFirmwareVersion())) {
                 wrapper.eq(TurnstileDevice::getFirmwareVersion, searchDto.getFirmwareVersion());
@@ -350,6 +355,7 @@ public class TurnstileDeviceServiceImpl extends ServiceImpl<TurnstileDeviceMappe
         vo.setSiteId(device.getSiteId());
         vo.setDeviceType(device.getDeviceType());
         vo.setStatus(device.getStatus());
+        vo.setType(device.getType());
         vo.setFirmwareVersion(device.getFirmwareVersion());
         
         // 时间转换
@@ -410,6 +416,7 @@ public class TurnstileDeviceServiceImpl extends ServiceImpl<TurnstileDeviceMappe
                 siteInfo.setSiteId(site.getId());
                 siteInfo.setSiteName(site.getSiteName());
                 siteInfo.setSiteCode(site.getSiteCode());
+                siteInfo.setType(site.getType());
                 // 只设置 SiteInfo 中存在的属性
                 vo.setSiteInfo(siteInfo);
             }

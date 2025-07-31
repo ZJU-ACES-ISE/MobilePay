@@ -89,4 +89,10 @@ public class DeviceSearchDto {
      */
     @JsonProperty("heartbeat_timeout_minutes")
     private Integer heartbeatTimeoutMinutes = 5;
+
+    /**
+     * 交通类型：SUBWAY, BUS
+     */
+    @JsonProperty("type")
+    private String type;
 }

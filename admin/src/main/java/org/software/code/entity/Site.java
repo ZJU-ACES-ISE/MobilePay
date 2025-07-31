@@ -57,6 +57,9 @@ public class Site implements Serializable {
     @TableField("status")
     private String status;
 
+    @TableField("type")
+    private String type;
+
     @TableField("created_time")
     private Date createdTime;
 

@@ -76,4 +76,11 @@ public class DeviceUpdateDto {
     @Size(max = 200, message = "设备位置描述长度不能超过200字符")
     @JsonProperty("location")
     private String location;
+
+    /**
+     * 交通类型：SUBWAY, BUS
+     */
+    @Pattern(regexp = "^(SUBWAY|BUS)$", message = "交通类型只能是SUBWAY或BUS")
+    @JsonProperty("type")
+    private String type;
 }
