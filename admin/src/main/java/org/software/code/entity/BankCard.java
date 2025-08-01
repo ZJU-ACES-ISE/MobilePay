@@ -12,45 +12,49 @@ import lombok.experimental.Accessors;
 
 /**
  * <p>
- * 
+ * 用户银行卡表（卡包）
  * </p>
  *
  * @author "101"计划《软件工程》实践教材案例团队
+ * @since 2025-07-31
  */
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("admin")
-public class Admin implements Serializable {
+@TableName("bank_card")
+public class BankCard implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    @TableField("username")
-    private String username;
+    @TableField("user_id")
+    private Long userId;
 
-    @TableField("password")
-    private String password;
+    @TableField("card_name")
+    private String cardName;
 
-    @TableField("role")
-    private String role;
+    @TableField("card_phone")
+    private String cardPhone;
+
+    @TableField("bank_name")
+    private String bankName;
+
+    @TableField("card_number")
+    private String cardNumber;
+
+    @TableField("type")
+    private Integer type;
 
     @TableField("status")
-    private String status;
+    private Integer status;
 
-    @TableField("last_login_time")
-    private LocalDateTime lastLoginTime;
+    @TableField("bind_time")
+    private LocalDateTime bindTime;
 
-    @TableField("last_login_ip")
-    private String lastLoginIp;
-
-    @TableField("created_time")
-    private LocalDateTime createdTime;
-
-    @TableField("updated_time")
-    private LocalDateTime updatedTime;
+    @TableField("last_four_digits")
+    private String lastFourDigits;
 
 
 }

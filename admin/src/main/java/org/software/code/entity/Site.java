@@ -4,20 +4,20 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.util.Date;
 
 /**
  * <p>
  * 
  * </p>
  *
- * @author “101”计划《软件工程》实践教材案例团队
+ * @author "101"计划《软件工程》实践教材案例团队
+ * @since 2025-07-31
  */
 @Getter
 @Setter
@@ -40,7 +40,7 @@ public class Site implements Serializable {
     private String city;
 
     @TableField("city_code")
-    private byte[] cityCode;
+    private String cityCode;
 
     @TableField("line_name")
     private String lineName;
@@ -54,17 +54,17 @@ public class Site implements Serializable {
     @TableField("address")
     private String address;
 
-    @TableField("status")
-    private String status;
-
     @TableField("type")
     private String type;
 
+    @TableField("status")
+    private String status;
+
     @TableField("created_time")
-    private Date createdTime;
+    private LocalDateTime createdTime;
 
     @TableField("updated_time")
-    private Date updatedTime;
+    private LocalDateTime updatedTime;
 
 
 }

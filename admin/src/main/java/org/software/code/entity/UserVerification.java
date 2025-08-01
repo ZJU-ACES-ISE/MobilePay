@@ -16,41 +16,45 @@ import lombok.experimental.Accessors;
  * </p>
  *
  * @author "101"计划《软件工程》实践教材案例团队
+ * @since 2025-07-31
  */
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("admin")
-public class Admin implements Serializable {
+@TableName("user_verification")
+public class UserVerification implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    @TableField("username")
-    private String username;
+    @TableField("user_id")
+    private Long userId;
 
-    @TableField("password")
-    private String password;
+    @TableField("real_name")
+    private String realName;
 
-    @TableField("role")
-    private String role;
+    @TableField("id_card")
+    private String idCard;
+
+    @TableField("id_card_front")
+    private String idCardFront;
+
+    @TableField("id_card_back")
+    private String idCardBack;
 
     @TableField("status")
     private String status;
 
-    @TableField("last_login_time")
-    private LocalDateTime lastLoginTime;
+    @TableField("reject_reason")
+    private String rejectReason;
 
-    @TableField("last_login_ip")
-    private String lastLoginIp;
+    @TableField("submit_time")
+    private LocalDateTime submitTime;
 
-    @TableField("created_time")
-    private LocalDateTime createdTime;
-
-    @TableField("updated_time")
-    private LocalDateTime updatedTime;
+    @TableField("audit_time")
+    private LocalDateTime auditTime;
 
 
 }

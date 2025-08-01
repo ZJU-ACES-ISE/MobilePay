@@ -1,17 +1,17 @@
 package org.software.code.mapper;
 
-import org.software.code.entity.Admin;
+import org.software.code.entity.ReceiptTransaction;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
  * <p>
- *  Mapper 接口
+ * 收款交易记录表 Mapper 接口
  * </p>
  *
  * @author "101"计划《软件工程》实践教材案例团队
  */
 @Mapper
-public interface AdminMapper extends BaseMapper<Admin> {
+public interface ReceiptTransactionMapper extends BaseMapper<ReceiptTransaction> {
 
 }

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.software.code.mapper.TransitRepayMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="org.software.code.entity.TransitRepay">
+        <id column="id" property="id" />
+        <result column="transit_id" property="transitId" />
+        <result column="amount" property="amount" />
+        <result column="pay_time" property="payTime" />
+        <result column="transaction_id" property="transactionId" />
+        <result column="cleared_at" property="clearedAt" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, transit_id, amount, pay_time, transaction_id, cleared_at, create_time, update_time
+    </sql>
+
+</mapper>

@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -149,8 +150,8 @@ public class SiteServiceImpl extends ServiceImpl<SiteMapper, Site> implements Si
             Site site = new Site();
             BeanUtils.copyProperties(createDto, site);
             site.setStatus(AdminConstants.SiteStatus.ACTIVE);
-            site.setCreatedTime(new Date());
-            site.setUpdatedTime(new Date());
+            site.setCreatedTime(LocalDateTime.now());
+            site.setUpdatedTime(LocalDateTime.now());
 
             int insertCount = siteMapper.insert(site);
 
@@ -191,7 +192,7 @@ public class SiteServiceImpl extends ServiceImpl<SiteMapper, Site> implements Si
             Site site = new Site();
             BeanUtils.copyProperties(updateDto, site);
             site.setId(siteId);
-            site.setUpdatedTime(new Date());
+            site.setUpdatedTime(LocalDateTime.now());
 
             int updateCount = siteMapper.updateById(site);
 
@@ -222,7 +223,7 @@ public class SiteServiceImpl extends ServiceImpl<SiteMapper, Site> implements Si
                 return false;
             }
 
-            site.setUpdatedTime(new Date());
+            site.setUpdatedTime(LocalDateTime.now());
 
             int updateCount = siteMapper.deleteById(siteId);
 
@@ -395,7 +396,7 @@ public class SiteServiceImpl extends ServiceImpl<SiteMapper, Site> implements Si
             }
 
             site.setStatus(status);
-            site.setUpdatedTime(new Date());
+            site.setUpdatedTime(LocalDateTime.now());
 
             int updateCount = siteMapper.updateById(site);
             return updateCount > 0;
@@ -424,9 +425,9 @@ public class SiteServiceImpl extends ServiceImpl<SiteMapper, Site> implements Si
                 .businessStartTime(null) // Not available in Site entity
                 .businessEndTime(null) // Not available in Site entity
                 .createdTime(site.getCreatedTime() != null ? 
-                    new java.sql.Timestamp(site.getCreatedTime().getTime()).toLocalDateTime() : null)
+                    LocalDateTime.now() : null)
                 .updatedTime(site.getUpdatedTime() != null ? 
-                    new java.sql.Timestamp(site.getUpdatedTime().getTime()).toLocalDateTime() : null)
+                    LocalDateTime.now() : null)
                 .build();
     }
 
@@ -449,9 +450,9 @@ public class SiteServiceImpl extends ServiceImpl<SiteMapper, Site> implements Si
                 .businessStartTime(null) // Not available in Site entity
                 .businessEndTime(null) // Not available in Site entity
                 .createdTime(site.getCreatedTime() != null ? 
-                    new java.sql.Timestamp(site.getCreatedTime().getTime()).toLocalDateTime() : null)
+                    LocalDateTime.now() : null)
                 .updatedTime(site.getUpdatedTime() != null ? 
-                    new java.sql.Timestamp(site.getUpdatedTime().getTime()).toLocalDateTime() : null)
+                    LocalDateTime.now() : null)
                 .createdBy(null) // Not available in Site entity
                 .updatedBy(null) // Not available in Site entity
                 .createdByName(null) // Not available in Site entity

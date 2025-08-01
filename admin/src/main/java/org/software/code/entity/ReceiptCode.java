@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,45 +13,43 @@ import lombok.experimental.Accessors;
 
 /**
  * <p>
- * 
+ * 收款码信息表
  * </p>
  *
  * @author "101"计划《软件工程》实践教材案例团队
+ * @since 2025-07-31
  */
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("admin")
-public class Admin implements Serializable {
+@TableName("receipt_code")
+public class ReceiptCode implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    @TableField("username")
-    private String username;
+    @TableField("receipt_code_id")
+    private String receiptCodeId;
 
-    @TableField("password")
-    private String password;
+    @TableField("user_id")
+    private String userId;
 
-    @TableField("role")
-    private String role;
+    @TableField("code_url")
+    private String codeUrl;
 
-    @TableField("status")
-    private String status;
+    @TableField("amount")
+    private BigDecimal amount;
 
-    @TableField("last_login_time")
-    private LocalDateTime lastLoginTime;
+    @TableField("expire_at")
+    private LocalDateTime expireAt;
 
-    @TableField("last_login_ip")
-    private String lastLoginIp;
+    @TableField("timestamp")
+    private LocalDateTime timestamp;
 
-    @TableField("created_time")
-    private LocalDateTime createdTime;
-
-    @TableField("updated_time")
-    private LocalDateTime updatedTime;
+    @TableField("update_time")
+    private LocalDateTime updateTime;
 
 
 }

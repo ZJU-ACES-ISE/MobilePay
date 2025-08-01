@@ -1,5 +1,6 @@
 package org.software.code.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -12,15 +13,22 @@ import org.software.code.common.except.ExceptionEnum;
 import org.software.code.dto.UserAuditDto;
 import org.software.code.dto.UserSearchDto;
 import org.software.code.entity.Site;
-import org.software.code.entity.TravelRecord;
+import org.software.code.entity.TransitRecord;
 import org.software.code.entity.User;
 import org.software.code.entity.UserAuditRecord;
+import org.software.code.entity.UserBalance;
+import org.software.code.entity.TurnstileDevice;
+import org.software.code.entity.UserVerification;
 import org.software.code.mapper.SiteMapper;
-import org.software.code.mapper.TravelRecordMapper;
+import org.software.code.mapper.TransitRecordMapper;
 import org.software.code.mapper.UserAuditRecordMapper;
+import org.software.code.mapper.UserBalanceMapper;
 import org.software.code.mapper.UserMapper;
+import org.software.code.mapper.TurnstileDeviceMapper;
+import org.software.code.mapper.UserVerificationMapper;
 import org.software.code.service.UserService;
-import org.software.code.vo.TravelRecordVo;
+import org.software.code.vo.PendingUserVo;
+import org.software.code.vo.TransitRecordVo;
 import org.software.code.vo.UserDetailVo;
 import org.software.code.vo.UserListVo;
 import org.software.code.vo.UserStatisticsVo;
@@ -28,12 +36,13 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.util.StringUtils;
+
 import java.util.stream.Collectors;
 
 /**
@@ -54,10 +63,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private UserAuditRecordMapper userAuditRecordMapper;
 
     @Resource
-    private TravelRecordMapper travelRecordMapper;
+    private UserBalanceMapper userBalanceMapper;
+
+    @Resource
+    private UserVerificationMapper userVerificationMapper;
+
+    @Resource
+    private TransitRecordMapper transitRecordMapper;
 
     @Resource
     private SiteMapper siteMapper;
+
+    @Resource
+    private TurnstileDeviceMapper turnstileDeviceMapper;
 
     @Override
     public Page<UserListVo> getUserPage(Integer pageNum, Integer pageSize, UserSearchDto searchDto) {
@@ -67,7 +85,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         Page<User> resultPage = userMapper.selectPage(
             userPage,
             Wrappers.<User>lambdaQuery()
-                .like(StringUtils.hasText(searchDto.getKeyword()), User::getUsername, searchDto.getKeyword())
+                .like(StringUtils.hasText(searchDto.getKeyword()), User::getNickname, searchDto.getKeyword())
                 .eq(StringUtils.hasText(searchDto.getStatus()), User::getStatus, searchDto.getStatus())
         );
 
@@ -79,7 +97,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public UserDetailVo getUserDetail(Long userId) {
         logger.info("获取用户详细信息，用户ID：{}", userId);
 
-        org.software.code.entity.User user = userMapper.selectById(userId);
+        User user = userMapper.selectById(userId);
         if (user == null) {
             logger.warn("用户不存在，用户ID：{}", userId);
             return null;
@@ -88,7 +106,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         UserDetailVo userDetailVo = convertToUserDetailVo(user);
 
         // 查询审核记录
-        List<UserAuditRecord> auditRecords = userAuditRecordMapper.selectList(new QueryWrapper<UserAuditRecord>().eq("user_id", userId));
+        List<UserAuditRecord> auditRecords = userAuditRecordMapper.selectList(
+            Wrappers.<UserAuditRecord>lambdaQuery().eq(UserAuditRecord::getUserId, userId)
+        );
         if (!CollectionUtils.isEmpty(auditRecords)) {
             List<UserDetailVo.AuditRecordVo> auditRecordVos = auditRecords.stream()
                     .map(this::convertToAuditRecordVo)
@@ -197,32 +217,44 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         logger.info("根据关键字搜索用户，关键字：{}", keyword);
 
         List<User> users = userMapper.selectList(Wrappers.<User>lambdaQuery()
-                .like(User::getUsername, keyword));
+                .like(User::getNickname, keyword));
         users.addAll(userMapper.selectList(Wrappers.<User>lambdaQuery()
-                .like(User::getRealName, keyword)));
+                .like(User::getPhone, keyword)));
         return users.stream()
                 .map(this::convertToUserListVo)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public Page<UserListVo> getPendingUsers(Integer pageNum, Integer pageSize) {
+    public Page<PendingUserVo> getPendingUsers(Integer pageNum, Integer pageSize) {
         logger.info("获取待审核用户列表，页码：{}，页大小：{}", pageNum, pageSize);
 
-        Page<User> resultPage = userMapper.selectPage(new Page<>(pageNum, pageSize),
-                Wrappers.<User>lambdaQuery()
-                        .eq(User::getStatus, AdminConstants.UserStatus.PENDING)
-        );
-
-        Page<UserListVo> voPage = new Page<>();
-        BeanUtils.copyProperties(resultPage, voPage, "records");
-
-        List<UserListVo> userListVos = resultPage.getRecords().stream()
-                .map(this::convertToUserListVo)
-                .collect(Collectors.toList());
-
-        voPage.setRecords(userListVos);
-        return voPage;
+        try {
+            // 1. 查询status='pending'的user_verification记录
+            Page<UserVerification> verificationPage = new Page<>(pageNum, pageSize);
+            LambdaQueryWrapper<UserVerification> wrapper = Wrappers.<UserVerification>lambdaQuery();
+            wrapper.eq(UserVerification::getStatus, "pending");
+            wrapper.orderByDesc(UserVerification::getSubmitTime);
+            
+            Page<UserVerification> resultPage = userVerificationMapper.selectPage(verificationPage, wrapper);
+            
+            // 2. 关联查询对应的user信息，构建PendingUserVo
+            Page<PendingUserVo> voPage = new Page<>();
+            BeanUtils.copyProperties(resultPage, voPage, "records");
+            
+            List<PendingUserVo> pendingUsers = resultPage.getRecords().stream()
+                    .map(this::convertToPendingUserVo)
+                    .collect(Collectors.toList());
+            
+            voPage.setRecords(pendingUsers);
+            
+            logger.info("获取待审核用户列表完成，共查询到{}条记录", pendingUsers.size());
+            return voPage;
+            
+        } catch (Exception e) {
+            logger.error("获取待审核用户列表失败：{}", e.getMessage(), e);
+            throw new BusinessException(ExceptionEnum.RUN_EXCEPTION);
+        }
     }
 
     @Override
@@ -235,16 +267,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             
             // 2. 查询各状态用户数
             long pendingUsers = userMapper.selectCount(
-                new QueryWrapper<User>().eq("status", AdminConstants.UserStatus.PENDING)
+                Wrappers.<User>lambdaQuery().eq(User::getStatus, AdminConstants.UserStatus.PENDING)
             );
             long approvedUsers = userMapper.selectCount(
-                new QueryWrapper<User>().eq("status", AdminConstants.UserStatus.APPROVED)
+                Wrappers.<User>lambdaQuery().eq(User::getStatus, AdminConstants.UserStatus.APPROVED)
             );
             long rejectedUsers = userMapper.selectCount(
-                new QueryWrapper<User>().eq("status", AdminConstants.UserStatus.REJECTED)
+                Wrappers.<User>lambdaQuery().eq(User::getStatus, AdminConstants.UserStatus.REJECTED)
             );
             long disabledUsers = userMapper.selectCount(
-                new QueryWrapper<User>().eq("status", AdminConstants.UserStatus.DISABLED)
+                Wrappers.<User>lambdaQuery().eq(User::getStatus, AdminConstants.UserStatus.DISABLED)
             );
             
             // 3. 查询今日新增用户数
@@ -266,6 +298,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                     .approvedUsers(approvedUsers)
                     .rejectedUsers(rejectedUsers)
                     .disabledUsers(disabledUsers)
+                    .newUsersToday(todayNewUsers)
+                    .newUsersThisMonth(monthNewUsers)
                     .build();
             
             logger.info("用户统计数据查询完成：总用户数={}, 待审核={}, 已通过={}, 已拒绝={}, 已禁用={}", 
@@ -292,31 +326,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public Page<TravelRecordVo> getUserTravelRecords(Long userId, Integer pageNum, Integer pageSize) {
-        logger.info("获取用户出行记录，用户ID：{}，页码：{}，页大小：{}", userId, pageNum, pageSize);
-
-        // 使用MyBatis Plus Lambda查询用户出行记录
-        Page<TravelRecord> travelRecordPage = new Page<>(pageNum, pageSize);
-        Page<TravelRecord> resultPage = travelRecordMapper.selectPage(
-            travelRecordPage,
-            Wrappers.<TravelRecord>lambdaQuery()
-                .eq(TravelRecord::getUserId, userId)
-                .orderByDesc(TravelRecord::getCreatedTime)
-        );
-
-        // 转换为VO对象
-        Page<TravelRecordVo> voPage = new Page<>();
-        BeanUtils.copyProperties(resultPage, voPage, "records");
-        
-        List<TravelRecordVo> travelRecordVos = resultPage.getRecords().stream()
-                .map(this::convertToTravelRecordVo)
-                .collect(Collectors.toList());
-        
-        voPage.setRecords(travelRecordVos);
-        return voPage;
-    }
-
-    @Override
     @Transactional
     public Boolean rejectUser(Long userId, UserAuditDto auditDto, Long adminId) {
         logger.info("审核拒绝用户，用户ID：{}，管理员ID：{}", userId, adminId);
@@ -325,6 +334,29 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         auditDto.setAuditResult(AdminConstants.AuditResult.REJECTED);
 
         return auditUser(userId, auditDto, adminId);
+    }
+
+    @Override
+    public Page<TransitRecordVo> getUserTravelRecords(Long userId, Integer pageNum, Integer pageSize) {
+        logger.info("获取用户出行记录，用户ID：{}，页码：{}，页大小：{}", userId, pageNum, pageSize);
+
+        Page<TransitRecord> transitRecordPage = new Page<>(pageNum, pageSize);
+        Page<TransitRecord> resultPage = transitRecordMapper.selectPage(
+            transitRecordPage,
+            Wrappers.<TransitRecord>lambdaQuery()
+                .eq(TransitRecord::getUserId, userId)
+                .orderByDesc(TransitRecord::getCreatedTime)
+        );
+
+        Page<TransitRecordVo> voPage = new Page<>();
+        BeanUtils.copyProperties(resultPage, voPage, "records");
+        
+        List<TransitRecordVo> transitRecordVos = resultPage.getRecords().stream()
+                .map(this::convertToTransitRecordVo)
+                .collect(Collectors.toList());
+        
+        voPage.setRecords(transitRecordVos);
+        return voPage;
     }
 
 
@@ -348,30 +380,83 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     private UserListVo convertToUserListVo(User user) {
+        // 查询用户身份验证信息
+        UserVerification verification = userVerificationMapper.selectOne(
+            Wrappers.<UserVerification>lambdaQuery().eq(UserVerification::getUserId, user.getId())
+        );
+        
+        // 查询用户余额信息
+        UserBalance balance = userBalanceMapper.selectOne(
+            Wrappers.<UserBalance>lambdaQuery().eq(UserBalance::getUserId, user.getId())
+        );
+        
         return UserListVo.builder()
                 .userId(user.getId())
                 .phone(user.getPhone())
-                .username(user.getUsername())
-                .realName(user.getRealName())
-                .email(user.getEmail())
-                .avatar(user.getAvatar())
+                .nickname(user.getNickname())
+                .realName(verification != null ? verification.getRealName() : null)
+                .idCard(verification != null ? verification.getIdCard() : null)
+                .avatar(user.getAvatarUrl())
                 .status(user.getStatus())
-                .balance(user.getBalance())
+                .balance(balance != null ? balance.getBalance() : null)
+                .createdTime(user.getCreateTime())
+                .updatedTime(user.getUpdateTime())
                 .build();
     }
 
     private UserDetailVo convertToUserDetailVo(User user) {
+        // 查询用户身份验证信息
+        UserVerification verification = userVerificationMapper.selectOne(
+            Wrappers.<UserVerification>lambdaQuery().eq(UserVerification::getUserId, user.getId())
+        );
+        
+        // 查询用户余额信息
+        UserBalance balance = userBalanceMapper.selectOne(
+            Wrappers.<UserBalance>lambdaQuery().eq(UserBalance::getUserId, user.getId())
+        );
+        
         return UserDetailVo.builder()
                 .userId(user.getId())
                 .phone(user.getPhone())
-                .username(user.getUsername())
-                .realName(user.getRealName())
-                .idCard(user.getIdCard())
-                .email(user.getEmail())
-                .avatar(user.getAvatar())
+                .nickname(user.getNickname())
+                .realName(verification != null ? verification.getRealName() : null)
+                .idCard(verification != null ? verification.getIdCard() : null)
+                .avatar(user.getAvatarUrl())
                 .status(user.getStatus())
-                .balance(user.getBalance())
+                .balance(balance != null ? balance.getBalance() : null)
+                .createdTime(user.getCreateTime())
+                .updatedTime(user.getUpdateTime())
                 .auditRecords(new ArrayList<>())
+                .build();
+    }
+
+    private PendingUserVo convertToPendingUserVo(UserVerification verification) {
+        // 查询对应的user信息
+        User user = userMapper.selectById(verification.getUserId());
+        if (user == null) {
+            logger.warn("用户不存在，user_id: {}", verification.getUserId());
+            return null;
+        }
+        
+        return PendingUserVo.builder()
+                // 用户基本信息
+                .userId(user.getId())
+                .phone(user.getPhone())
+                .nickname(user.getNickname())
+                .avatarUrl(user.getAvatarUrl())
+                .status(user.getStatus())
+                .createTime(user.getCreateTime())
+                .updateTime(user.getUpdateTime())
+                // 身份验证信息
+                .verificationId(verification.getId())
+                .realName(verification.getRealName())
+                .idCard(verification.getIdCard())
+                .idCardFront(verification.getIdCardFront())
+                .idCardBack(verification.getIdCardBack())
+                .verificationStatus(verification.getStatus())
+                .rejectReason(verification.getRejectReason())
+                .submitTime(verification.getSubmitTime())
+                .auditTime(verification.getAuditTime())
                 .build();
     }
 
@@ -384,81 +469,85 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 .build();
     }
 
-    private TravelRecordVo convertToTravelRecordVo(TravelRecord travelRecord) {
-        // 查询进站和出站站点名称
+    private TransitRecordVo convertToTransitRecordVo(TransitRecord transitRecord) {
         String entrySiteName = null;
         String exitSiteName = null;
+        String city = null;
+        String entryDeviceName = null;
+        String exitDeviceName = null;
         
-        if (travelRecord.getEntrySiteId() != null) {
-            Site entrySite = siteMapper.selectById(travelRecord.getEntrySiteId());
-            entrySiteName = entrySite != null ? entrySite.getSiteName() : null;
+        // 查询进站站点信息
+        if (transitRecord.getEntrySiteId() != null) {
+            Site entrySite = siteMapper.selectById(transitRecord.getEntrySiteId());
+            if (entrySite != null) {
+                entrySiteName = entrySite.getSiteName();
+                city = entrySite.getCity(); // 从进站站点获取城市信息
+            }
         }
         
-        if (travelRecord.getExitSiteId() != null) {
-            Site exitSite = siteMapper.selectById(travelRecord.getExitSiteId());
-            exitSiteName = exitSite != null ? exitSite.getSiteName() : null;
+        // 查询出站站点信息
+        if (transitRecord.getExitSiteId() != null) {
+            Site exitSite = siteMapper.selectById(transitRecord.getExitSiteId());
+            if (exitSite != null) {
+                exitSiteName = exitSite.getSiteName();
+                // 如果进站站点没有城市信息，从出站站点获取
+                if (city == null) {
+                    city = exitSite.getCity();
+                }
+            }
         }
         
-        // 计算出行时长（分钟）
+        // 查询进站设备信息
+        if (transitRecord.getEntryDeviceId() != null) {
+            TurnstileDevice entryDevice = turnstileDeviceMapper.selectById(transitRecord.getEntryDeviceId());
+            entryDeviceName = entryDevice != null ? entryDevice.getDeviceName() : null;
+        }
+        
+        // 查询出站设备信息
+        if (transitRecord.getExitDeviceId() != null) {
+            TurnstileDevice exitDevice = turnstileDeviceMapper.selectById(transitRecord.getExitDeviceId());
+            exitDeviceName = exitDevice != null ? exitDevice.getDeviceName() : null;
+        }
+        
         Long durationMinutes = null;
-        if (travelRecord.getEntryTime() != null && travelRecord.getExitTime() != null) {
-            long diffInMillis = travelRecord.getExitTime().getTime() - travelRecord.getEntryTime().getTime();
-            durationMinutes = diffInMillis / (1000 * 60); // 转换为分钟
+        if (transitRecord.getEntryTime() != null && transitRecord.getExitTime() != null) {
+            long diffInSeconds = java.time.Duration.between(transitRecord.getEntryTime(), transitRecord.getExitTime()).getSeconds();
+            durationMinutes = diffInSeconds / 60;
         }
         
-        // 状态名称映射
-        String statusName = getStatusName(travelRecord.getStatus());
+        String statusName = getTransitStatusName(transitRecord.getStatus());
         
-        // 支付方式名称映射
-        String paymentMethodName = getPaymentMethodName(travelRecord.getPaymentMethod());
-        
-        return TravelRecordVo.builder()
-                .id(travelRecord.getId())
-                .userId(travelRecord.getUserId())
-                .entrySiteId(travelRecord.getEntrySiteId())
-                .exitSiteId(travelRecord.getExitSiteId())
+        return TransitRecordVo.builder()
+                .userId(transitRecord.getUserId())
+                .mode(transitRecord.getMode())
+                .city(city)
                 .entrySiteName(entrySiteName)
                 .exitSiteName(exitSiteName)
-                .entryDeviceId(travelRecord.getEntryDeviceId())
-                .exitDeviceId(travelRecord.getExitDeviceId())
-                .entryTime(travelRecord.getEntryTime() != null ? 
-                    travelRecord.getEntryTime().toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime() : null)
-                .exitTime(travelRecord.getExitTime() != null ? 
-                    travelRecord.getExitTime().toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime() : null)
-                .amount(travelRecord.getAmount())
-                .discountAmount(travelRecord.getDiscountAmount())
-                .actualAmount(travelRecord.getActualAmount())
-                .status(travelRecord.getStatus())
+                .entryDeviceName(entryDeviceName)
+                .exitDeviceName(exitDeviceName)
+                .entryTime(transitRecord.getEntryTime())
+                .exitTime(transitRecord.getExitTime())
+                .amount(transitRecord.getAmount())
+                .discountAmount(transitRecord.getDiscountAmount())
+                .actualAmount(transitRecord.getActualAmount())
+                .status(transitRecord.getStatus())
                 .statusName(statusName)
-                .paymentMethod(travelRecord.getPaymentMethod())
-                .paymentMethodName(paymentMethodName)
+                .reason(transitRecord.getReason())
+                .transactionId(transitRecord.getTransactionId())
                 .durationMinutes(durationMinutes)
-                .createdTime(travelRecord.getCreatedTime() != null ? 
-                    travelRecord.getCreatedTime().toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime() : null)
-                .updatedTime(travelRecord.getUpdatedTime() != null ? 
-                    travelRecord.getUpdatedTime().toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime() : null)
+                .createdTime(transitRecord.getCreatedTime())
+                .updatedTime(transitRecord.getUpdatedTime())
                 .build();
     }
     
-    private String getStatusName(String status) {
+    private String getTransitStatusName(Integer status) {
         if (status == null) return null;
         switch (status) {
-            case "ENTRY": return "已进站";
-            case "EXIT": return "已出站";
-            case "COMPLETED": return "行程完成";
-            case "CANCELLED": return "行程取消";
-            default: return status;
-        }
-    }
-    
-    private String getPaymentMethodName(String paymentMethod) {
-        if (paymentMethod == null) return null;
-        switch (paymentMethod) {
-            case "BALANCE": return "余额支付";
-            case "ALIPAY": return "支付宝";
-            case "WECHAT": return "微信支付";
-            case "BANK_CARD": return "银行卡";
-            default: return paymentMethod;
+            case 1: return "已进站";
+            case 2: return "已出站";
+            case 3: return "行程完成";
+            case 4: return "行程取消";
+            default: return "未知状态";
         }
     }
 }

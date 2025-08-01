@@ -13,14 +13,9 @@ import java.time.LocalDateTime;
  */
 @Data
 @Builder
-public class TravelRecordVo implements Serializable {
+public class TransitRecordVo implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    /**
-     * 记录ID
-     */
-    private Long id;
 
     /**
      * 用户ID
@@ -28,14 +23,14 @@ public class TravelRecordVo implements Serializable {
     private Long userId;
 
     /**
-     * 进站站点ID
+     * 出行方式
      */
-    private Long entrySiteId;
+    private String mode;
 
     /**
-     * 出站站点ID
+     * 城市
      */
-    private Long exitSiteId;
+    private String city;
 
     /**
      * 进站站点名称
@@ -48,14 +43,14 @@ public class TravelRecordVo implements Serializable {
     private String exitSiteName;
 
     /**
-     * 进站设备ID
+     * 进站设备名称
      */
-    private Long entryDeviceId;
+    private String entryDeviceName;
 
     /**
-     * 出站设备ID
+     * 出站设备名称
      */
-    private Long exitDeviceId;
+    private String exitDeviceName;
 
     /**
      * 进站时间
@@ -85,7 +80,7 @@ public class TravelRecordVo implements Serializable {
     /**
      * 出行状态
      */
-    private String status;
+    private Integer status;
 
     /**
      * 状态名称
@@ -93,14 +88,14 @@ public class TravelRecordVo implements Serializable {
     private String statusName;
 
     /**
-     * 支付方式
+     * 原因
      */
-    private String paymentMethod;
+    private String reason;
 
     /**
-     * 支付方式名称
+     * 交易ID
      */
-    private String paymentMethodName;
+    private String transactionId;
 
     /**
      * 出行时长（分钟）

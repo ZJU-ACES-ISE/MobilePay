@@ -2,6 +2,8 @@ package org.software.code.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import lombok.Getter;
+import lombok.Setter;
 import org.software.code.dto.SiteCreateDto;
 import org.software.code.dto.SiteSearchDto;
 import org.software.code.dto.SiteUpdateDto;
@@ -195,6 +197,8 @@ public interface SiteService extends IService<Site> {
     /**
      * 站点统计视图对象
      */
+    @Getter
+    @Setter
     class SiteStatisticsVo {
         private Integer totalSites;
         private Integer activeSites;
@@ -203,45 +207,5 @@ public interface SiteService extends IService<Site> {
 
         private Integer totalCities;
 
-        // Getters and Setters
-        public Integer getTotalSites() {
-            return totalSites;
-        }
-
-        public void setTotalSites(Integer totalSites) {
-            this.totalSites = totalSites;
-        }
-
-        public Integer getActiveSites() {
-            return activeSites;
-        }
-
-        public void setActiveSites(Integer activeSites) {
-            this.activeSites = activeSites;
-        }
-
-        public Integer getInactiveSites() {
-            return inactiveSites;
-        }
-
-        public void setInactiveSites(Integer inactiveSites) {
-            this.inactiveSites = inactiveSites;
-        }
-
-        public Integer getMaintenanceSites() {
-            return maintenanceSites;
-        }
-
-        public void setMaintenanceSites(Integer maintenanceSites) {
-            this.maintenanceSites = maintenanceSites;
-        }
-
-        public Integer getTotalCities() {
-            return totalCities;
-        }
-
-        public void setTotalCities(Integer totalCities) {
-            this.totalCities = totalCities;
-        }
     }
 }

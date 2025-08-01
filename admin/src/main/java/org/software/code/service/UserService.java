@@ -6,7 +6,8 @@ import org.software.code.common.except.BusinessException;
 import org.software.code.dto.UserAuditDto;
 import org.software.code.dto.UserSearchDto;
 import org.software.code.entity.User;
-import org.software.code.vo.TravelRecordVo;
+import org.software.code.vo.PendingUserVo;
+import org.software.code.vo.TransitRecordVo;
 import org.software.code.vo.UserDetailVo;
 import org.software.code.vo.UserListVo;
 import org.software.code.vo.UserStatisticsVo;
@@ -168,13 +169,30 @@ public interface UserService extends IService<User> {
     List<UserListVo> searchUsersByKeyword(String keyword);
 
     /**
-     * 获取待审核用户列表
+     * 获取待审核用户列表（基于user_verification表的pending状态）
+     * 
+     * <p>此方法查询所有身份验证状态为待审核的用户，合并用户基本信息和身份验证详细信息。</p>
+     * 
+     * <p>查询逻辑：</p>
+     * <ul>
+     *   <li>筛选条件：user_verification.status = 'pending'</li>
+     *   <li>排序规则：按submit_time降序（最新提交的在前）</li>
+     *   <li>关联查询：通过user_verification.user_id关联user表</li>
+     * </ul>
+     * 
+     * <p>返回的数据包含：</p>
+     * <ul>
+     *   <li>用户基本信息：手机号、昵称、头像、注册时间等</li>
+     *   <li>身份验证信息：真实姓名、身份证、证件照片、提交时间等</li>
+     *   <li>审核相关信息：验证状态、拒绝原因、审核时间等</li>
+     * </ul>
      *
-     * @param pageNum  页码
-     * @param pageSize 每页大小
-     * @return 待审核用户列表
+     * @param pageNum  页码，从1开始
+     * @param pageSize 每页大小，建议范围10-50
+     * @return 待审核用户分页列表
+     * @see PendingUserVo 待审核用户数据结构说明
      */
-    Page<UserListVo> getPendingUsers(Integer pageNum, Integer pageSize);
+    Page<PendingUserVo> getPendingUsers(Integer pageNum, Integer pageSize);
 
     /**
      * 获取用户统计信息
@@ -211,6 +229,6 @@ public interface UserService extends IService<User> {
      * @param pageSize 每页大小
      * @return 出行记录分页结果
      */
-    Page<TravelRecordVo> getUserTravelRecords(Long userId, Integer pageNum, Integer pageSize);
+    Page<TransitRecordVo> getUserTravelRecords(Long userId, Integer pageNum, Integer pageSize);
 
 }

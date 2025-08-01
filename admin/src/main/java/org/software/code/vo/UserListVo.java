@@ -32,10 +32,10 @@ public class UserListVo {
     private String phone;
 
     /**
-     * 用户名
+     * 昵称
      */
-    @JsonProperty("username")
-    private String username;
+    @JsonProperty("nickname")
+    private String nickname;
 
     /**
      * 真实姓名
@@ -44,10 +44,10 @@ public class UserListVo {
     private String realName;
 
     /**
-     * 邮箱
+     * 身份证号
      */
-    @JsonProperty("email")
-    private String email;
+    @JsonProperty("id_card")
+    private String idCard;
 
     /**
      * 头像URL
@@ -72,18 +72,6 @@ public class UserListVo {
      */
     @JsonProperty("balance")
     private BigDecimal balance;
-
-    /**
-     * 用户类型
-     */
-    @JsonProperty("user_type")
-    private String userType;
-
-    /**
-     * 用户类型名称
-     */
-    @JsonProperty("user_type_name")
-    private String userTypeName;
 
     /**
      * 创建时间
@@ -111,15 +99,5 @@ public class UserListVo {
             return "已禁用";
         }
         return "未知状态";
-    }
-
-    /**
-     * 获取用户类型名称
-     */
-    public String getUserTypeName() {
-        if ("NORMAL".equals(this.userType)) {
-            return "普通用户";
-        }
-        return "未知类型";
     }
 }

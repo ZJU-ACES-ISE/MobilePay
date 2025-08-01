@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.software.code.mapper.BankCardMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="org.software.code.entity.BankCard">
+        <id column="id" property="id" />
+        <result column="user_id" property="userId" />
+        <result column="card_name" property="cardName" />
+        <result column="card_phone" property="cardPhone" />
+        <result column="bank_name" property="bankName" />
+        <result column="card_number" property="cardNumber" />
+        <result column="type" property="type" />
+        <result column="status" property="status" />
+        <result column="bind_time" property="bindTime" />
+        <result column="last_four_digits" property="lastFourDigits" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, user_id, card_name, card_phone, bank_name, card_number, type, status, bind_time, last_four_digits
+    </sql>
+
+</mapper>

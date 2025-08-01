@@ -1,5 +1,6 @@
 package org.software.code.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -10,7 +11,8 @@ import org.software.code.common.result.Result;
 import org.software.code.service.*;
 import org.software.code.vo.DeviceStatisticsVo;
 import org.software.code.vo.DiscountStatisticsVo;
-import org.software.code.vo.TravelStatisticsVo;
+import org.software.code.vo.TransferRecordVo;
+import org.software.code.vo.TransitRecordVo;
 import org.software.code.vo.UserStatisticsVo;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +25,6 @@ import javax.annotation.Resource;
  * <p>本控制器负责处理所有统计相关的请求，包括：</p>
  * <ul>
  *   <li>用户数据统计：用户注册、审核、活跃度等统计分析</li>
- *   <li>出行数据统计：出行记录、扫码记录、路线分析等</li>
  *   <li>设备运营统计：设备状态、使用率、故障分析等</li>
  *   <li>折扣策略統計：策略使用效果、转化率、ROI分析等</li>
  *   <li>站点基础統計：站点分布、运营状态、设备配置等</li>
@@ -41,7 +42,7 @@ import javax.annotation.Resource;
  *
  * @author "101"计划《软件工程》实践教材案例团队
  */
-@Tag(name = "数据统计", description = "用户、出行、设备、折扣策略、站点等业务数据统计分析接口")
+@Tag(name = "数据统计", description = "用户、设备、折扣策略、站点等业务数据统计分析接口")
 @RestController
 @RequestMapping("/statistics")
 @Validated
@@ -53,16 +54,13 @@ public class StatisticsController {
     private StatisticsService statisticsService;
     
     @Resource
-    private UserService userService;
-    
-    @Resource
     private SiteService siteService;
     
     @Resource
-    private TurnstileDeviceService deviceService;
+    private TransitRecordService transitRecordService;
     
     @Resource
-    private DiscountStrategyService discountStrategyService;
+    private TransferRecordService transferRecordService;
 
     /**
      * 获取用户统计数据接口（基于时间范围）
@@ -95,35 +93,6 @@ public class StatisticsController {
         logger.info("管理员查询用户统计数据，管理员ID：{}，开始日期：{}，结束日期：{}", adminId, startDate, endDate);
         
         UserStatisticsVo statistics = statisticsService.getUserStatistics(startDate, endDate);
-        return Result.success(statistics);
-    }
-
-
-    /**
-     * 获取出行统计数据接口
-     * 
-     * <p>此接口用于获取指定时间范围和城市的出行相关统计数据，
-     * 分析用户出行行为和系统使用情况。</p>
-     *
-     * @param startDate 统计开始日期，格式为yyyy-MM-dd，可选
-     * @param endDate 统计结束日期，格式为yyyy-MM-dd，可选
-     * @param city 城市名称，可选，为空时统计所有城市
-     * @param adminId 当前管理员ID
-     * @return 出行统计数据
-     * @see TravelStatisticsVo 出行统计数据结构说明
-     */
-    @GetMapping("/travel")
-    @Operation(summary = "出行数据统计", description = "获取出行记录、扫码记录等统计数据")
-    @AdminRole()
-    public Result<?> getTravelStatistics(
-            @Parameter(description = "统计开始日期 (yyyy-MM-dd)") @RequestParam(required = false) String startDate,
-            @Parameter(description = "统计结束日期 (yyyy-MM-dd)") @RequestParam(required = false) String endDate,
-            @Parameter(description = "城市名称") @RequestParam(required = false) String city,
-            @RequestHeader("X-User-Id") String adminId) {
-        
-        logger.info("管理员查询出行统计数据，管理员ID：{}，开始日期：{}，结束日期：{}，城市：{}", adminId, startDate, endDate, city);
-        
-        TravelStatisticsVo statistics = statisticsService.getTravelStatistics(startDate, endDate, city);
         return Result.success(statistics);
     }
 
@@ -219,5 +188,59 @@ public class StatisticsController {
         
         SiteService.SiteStatisticsVo statistics = siteService.getSiteStatistics();
         return Result.success(statistics);
+    }
+
+    /**
+     * 获取所有出行记录接口
+     * 
+     * <p>此接口用于获取系统中所有用户的出行记录，支持分页查询。</p>
+     * 
+     * <p>获取全局的出行数据视图，
+     * 用于管理员进行全局出行数据分析和监控。</p>
+     *
+     * @param pageNum 页码，默认为1
+     * @param pageSize 每页记录数，默认为10
+     * @param adminId 当前管理员ID
+     * @return 分页的出行记录数据
+     */
+    @GetMapping("/travel")
+    @Operation(summary = "获取所有出行记录", description = "获取系统中所有用户的出行记录，支持分页查询")
+    @AdminRole()
+    public Result<?> getAllTransitRecords(
+            @Parameter(description = "页码") @RequestParam(defaultValue = "1") Integer pageNum,
+            @Parameter(description = "每页记录数") @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestHeader("X-User-Id") String adminId) {
+        
+        logger.info("管理员查询所有出行记录，管理员ID：{}，页码：{}，页大小：{}", adminId, pageNum, pageSize);
+        
+        Page<TransitRecordVo> transitRecords = transitRecordService.getAllTransitRecords(pageNum, pageSize);
+        return Result.success(transitRecords);
+    }
+
+    /**
+     * 获取所有交易记录流水
+     * 
+     * <p>此接口用于获取系统中所有用户的交易记录，支持分页查询。</p>
+     * 
+     * <p>该接口提供系统全局的交易数据视图，
+     * 用于管理员进行全局交易数据分析和监控。</p>
+     *
+     * @param pageNum 页码，默认为1
+     * @param pageSize 每页记录数，默认为10
+     * @param adminId 当前管理员ID
+     * @return 分页的交易记录数据
+     */
+    @GetMapping("/transfer")
+    @Operation(summary = "获取所有交易记录", description = "获取系统中所有用户的交易记录，支持分页查询")
+    @AdminRole()
+    public Result<?> getAllTransferRecords(
+            @Parameter(description = "页码") @RequestParam(defaultValue = "1") Integer pageNum,
+            @Parameter(description = "每页记录数") @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestHeader("X-User-Id") String adminId) {
+        
+        logger.info("管理员查询所有转账记录，管理员ID：{}，页码：{}，页大小：{}", adminId, pageNum, pageSize);
+        
+        Page<TransferRecordVo> transferRecords = transferRecordService.getAllTransferRecords(pageNum, pageSize);
+        return Result.success(transferRecords);
     }
 }

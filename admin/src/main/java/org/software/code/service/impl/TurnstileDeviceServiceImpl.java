@@ -53,7 +53,7 @@ public class TurnstileDeviceServiceImpl extends ServiceImpl<TurnstileDeviceMappe
     public Page<DeviceListVo> getDevicePage(Integer pageNum, Integer pageSize, DeviceSearchDto searchDto) {
         logger.info("获取设备列表分页数据，页码：{}，页大小：{}", pageNum, pageSize);
 
-        LambdaQueryWrapper<TurnstileDevice> wrapper = Wrappers.<TurnstileDevice>lambdaQuery();
+        LambdaQueryWrapper<TurnstileDevice> wrapper = Wrappers.lambdaQuery();
         
         // 添加空安全检查和所有搜索条件
         if (searchDto != null) {
@@ -186,8 +186,8 @@ public class TurnstileDeviceServiceImpl extends ServiceImpl<TurnstileDeviceMappe
                 return false;
             }
 
-            device.setLastHeartbeat(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()));
-            device.setUpdatedTime(new Date());
+            device.setLastHeartbeat(LocalDateTime.now());
+            device.setUpdatedTime(LocalDateTime.now());
 
             int updateCount = turnstileDeviceMapper.updateById(device);
 
@@ -232,7 +232,7 @@ public class TurnstileDeviceServiceImpl extends ServiceImpl<TurnstileDeviceMappe
                 null,
                 Wrappers.<TurnstileDevice>lambdaUpdate()
                     .set(TurnstileDevice::getStatus, status)
-                    .set(TurnstileDevice::getUpdatedTime, new Date())
+                    .set(TurnstileDevice::getUpdatedTime, LocalDateTime.now())
                     .in(TurnstileDevice::getId, deviceIds)
             );
 
@@ -279,8 +279,8 @@ public class TurnstileDeviceServiceImpl extends ServiceImpl<TurnstileDeviceMappe
             TurnstileDevice device = new TurnstileDevice();
             BeanUtils.copyProperties(createDto, device);
             device.setStatus(AdminConstants.DeviceStatus.ONLINE);
-            device.setCreatedTime(new Date());
-            device.setUpdatedTime(new Date());
+            device.setCreatedTime(LocalDateTime.now());
+            device.setUpdatedTime(LocalDateTime.now());
 
             int insertCount = turnstileDeviceMapper.insert(device);
             
@@ -322,7 +322,7 @@ public class TurnstileDeviceServiceImpl extends ServiceImpl<TurnstileDeviceMappe
             TurnstileDevice device = new TurnstileDevice();
             BeanUtils.copyProperties(updateDto, device);
             device.setId(deviceId);
-            device.setUpdatedTime(new Date());
+            device.setUpdatedTime(LocalDateTime.now());
 
             int updateCount = turnstileDeviceMapper.updateById(device);
 
@@ -357,21 +357,13 @@ public class TurnstileDeviceServiceImpl extends ServiceImpl<TurnstileDeviceMappe
         vo.setStatus(device.getStatus());
         vo.setType(device.getType());
         vo.setFirmwareVersion(device.getFirmwareVersion());
-        
-        // 时间转换
-        if (device.getCreatedTime() != null) {
-            vo.setCreatedTime(device.getCreatedTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
-        }
-        if (device.getUpdatedTime() != null) {
-            vo.setUpdatedTime(device.getUpdatedTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
-        }
-        if (device.getLastHeartbeat() != null) {
-            vo.setLastHeartbeat(device.getLastHeartbeat().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
-        }
-        
+        vo.setCreatedTime(device.getCreatedTime());
+        vo.setUpdatedTime(device.getUpdatedTime());
+        vo.setLastHeartbeat(device.getLastHeartbeat());
+
         // 计算在线状态
         vo.setIsOnline(calculateIsOnline(device.getLastHeartbeat()));
-        
+
         // 获取站点信息
         if (device.getSiteId() != null) {
             Site site = siteMapper.selectById(device.getSiteId());
@@ -394,16 +386,9 @@ public class TurnstileDeviceServiceImpl extends ServiceImpl<TurnstileDeviceMappe
         BeanUtils.copyProperties(device, vo);
         vo.setDeviceId(device.getId());
         
-        // 时间转换
-        if (device.getCreatedTime() != null) {
-            vo.setCreatedTime(device.getCreatedTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
-        }
-        if (device.getUpdatedTime() != null) {
-            vo.setUpdatedTime(device.getUpdatedTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
-        }
-        if (device.getLastHeartbeat() != null) {
-            vo.setLastHeartbeat(device.getLastHeartbeat().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
-        }
+        vo.setCreatedTime(device.getCreatedTime());
+        vo.setUpdatedTime(device.getUpdatedTime());
+        vo.setLastHeartbeat(device.getLastHeartbeat());
         
         // 计算在线状态
         vo.setIsOnline(calculateIsOnline(device.getLastHeartbeat()));
@@ -428,15 +413,14 @@ public class TurnstileDeviceServiceImpl extends ServiceImpl<TurnstileDeviceMappe
     /**
      * 计算设备是否在线
      */
-    private Boolean calculateIsOnline(Date lastHeartbeat) {
+    private Boolean calculateIsOnline(LocalDateTime lastHeartbeat) {
         if (lastHeartbeat == null) {
             return false;
         }
-        
-        LocalDateTime heartbeatTime = lastHeartbeat.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+
         LocalDateTime thresholdTime = LocalDateTime.now().minusMinutes(DEFAULT_HEARTBEAT_TIMEOUT_MINUTES);
-        
-        return heartbeatTime.isAfter(thresholdTime);
+
+        return lastHeartbeat.isAfter(thresholdTime);
     }
 
     /**
