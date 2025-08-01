@@ -6,18 +6,16 @@ import org.software.code.common.result.ResultEnum;
 import org.software.code.common.util.JwtUtil;
 import org.software.code.entity.UserBalance;
 import org.software.code.mapper.UserBalanceMapper;
-import org.software.code.service.UserService;
+import org.software.code.service.UserPaymentService;
 import org.software.code.vo.UserBalanceVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.math.BigDecimal;
 
 /**
  * 用户服务实现类
  */
 @Service
-public class UserServiceImpl implements UserService {
+public class UserPaymentServiceImpl implements UserPaymentService {
 
     @Autowired
     private JwtUtil jwtUtil;

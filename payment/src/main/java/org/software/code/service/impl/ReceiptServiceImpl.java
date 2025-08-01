@@ -18,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.software.code.entity.User;
-import org.software.code.mapper.UserMapper;
 import org.software.code.common.result.ResultEnum;
 import org.software.code.vo.ReceiptConfirmVo;
 

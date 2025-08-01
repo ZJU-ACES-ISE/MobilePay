@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.software.code.common.result.Result;
-import org.software.code.service.UserService;
+import org.software.code.service.UserPaymentService;
 import org.software.code.vo.UserBalanceVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -14,10 +14,10 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "用户相关接口", description = "用户信息、余额查询等操作")
 @RestController
 @RequestMapping("/user")
-public class UserController {
+public class UserPaymentController {
 
     @Autowired
-    private UserService userService;
+    private UserPaymentService userService;
 
     /**
      * 查询用户余额

@@ -6,7 +6,7 @@ import org.software.code.vo.UserBalanceVo;
 /**
  * 用户服务接口
  */
-public interface UserService {
+public interface UserPaymentService {
     
     /**
      * 查询用户余额
