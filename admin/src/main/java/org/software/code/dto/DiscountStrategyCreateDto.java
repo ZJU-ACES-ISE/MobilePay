@@ -2,6 +2,7 @@ package org.software.code.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+import lombok.Getter;
 
 import javax.validation.constraints.*;
 import java.math.BigDecimal;
@@ -14,6 +15,7 @@ import java.util.List;
  * @author "101"计划《软件工程》实践教材案例团队
  */
 @Data
+@Getter
 public class DiscountStrategyCreateDto {
 
     /**
@@ -143,77 +145,4 @@ public class DiscountStrategyCreateDto {
      */
     @JsonProperty("stackable")
     private Boolean stackable = false;
-
-    // 手动添加 getter 方法以确保可用
-    public String getStrategyName() {
-        return strategyName;
-    }
-
-    public String getStrategyCode() {
-        return strategyCode;
-    }
-
-    public String getStrategyType() {
-        return strategyType;
-    }
-
-    public String getDiscountType() {
-        return discountType;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public BigDecimal getDiscountRate() {
-        return discountRate;
-    }
-
-    public BigDecimal getDiscountAmount() {
-        return discountAmount;
-    }
-
-    public BigDecimal getMinAmount() {
-        return minAmount;
-    }
-
-    public BigDecimal getMaxDiscount() {
-        return maxDiscount;
-    }
-
-    public String getTargetUserType() {
-        return targetUserType;
-    }
-
-    public List<String> getTargetCities() {
-        return targetCities;
-    }
-
-    public List<Long> getTargetSites() {
-        return targetSites;
-    }
-
-    public LocalDateTime getStartTime() {
-        return startTime;
-    }
-
-    public LocalDateTime getEndTime() {
-        return endTime;
-    }
-
-    public Integer getUsageLimit() {
-        return usageLimit;
-    }
-
-    public Integer getUserUsageLimit() {
-        return userUsageLimit;
-    }
-
-    public Integer getPriority() {
-        return priority;
-    }
-
-    public Boolean getStackable() {
-        return stackable;
-    }
 }

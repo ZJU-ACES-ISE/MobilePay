@@ -1,0 +1,84 @@
+# ======= Server Configuration =======
+server:
+  port: <your_server_port>
+
+# ======= Spring Application Configuration =======
+spring:
+  application:
+    name: gateway
+    
+  # ======= Redis Cache Configuration =======
+  redis:
+    host: <your_redis_host>
+    port: <your_redis_port>
+    password: <your_redis_password>
+    
+  # ======= Cache Type Configuration =======
+  cache:
+    type: redis
+    
+  # ======= Spring Cloud Configuration =======
+  cloud:
+    nacos:
+      # ======= Nacos Configuration Management =======
+      config:
+        server-addr: <your_nacos_config_server>
+        namespace: <your_nacos_namespace>
+        username: <your_nacos_username>
+        password: <your_nacos_password>
+        file-extension: yaml
+        
+      # ======= Nacos Service Discovery =======
+      discovery:
+        server-addr: <your_nacos_discovery_server>
+        namespace: <your_nacos_namespace>
+        username: <your_nacos_username>
+        password: <your_nacos_password>
+        
+    # ======= Spring Cloud Gateway Configuration =======
+    gateway:
+      routes:
+        # User service route
+        - id: user
+          uri: lb://user
+          predicates:
+            - Path=/user/**
+          filters:
+            - StripPrefix=1
+        # Admin service route
+        - id: admin
+          uri: lb://admin
+          predicates:
+            - Path=/admin/**
+          filters:
+            - StripPrefix=1
+            
+      # ======= Global CORS Configuration =======
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+              - PATCH
+            allowedHeaders: "*"
+            allowCredentials: true
+
+# ======= Internal Service Authentication Configuration =======
+app:
+  internal:
+    secret: <your_internal_secret>
+
+# ======= SpringDoc API Documentation Configuration =======
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: user
+        url: /user/v3/api-docs
+      - name: admin
+        url: /admin/v3/api-docs

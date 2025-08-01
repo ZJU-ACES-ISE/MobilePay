@@ -10,8 +10,8 @@ import org.software.code.common.except.BusinessException;
 import org.software.code.common.except.ExceptionEnum;
 import org.software.code.common.result.Result;
 import org.software.code.common.util.JwtUtil;
-import org.springframework.beans.factory.annotation.Value;
 import org.software.code.common.util.RedisUtil;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -58,6 +58,7 @@ public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
         "/user/auth/login",
         "/user/auth/register", 
         "/admin/auth/login",
+        "/admin/auth/refresh",
         "/app/v3/api-docs",
         "/app/swagger-ui",
         "/app/user/register",
@@ -132,10 +133,19 @@ public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
     }
 
     /**
-     * 验证Token有效性
+     * 验证Token有效性（包括黑名单检查）
      */
     private Mono<Boolean> validateToken(String token) {
-        return Mono.fromCallable(() -> JwtUtil.validateToken(token)).onErrorReturn(false);
+        return Mono.fromCallable(() -> {
+            // 先检查JWT基本有效性
+            if (!JwtUtil.validateToken(token)) {
+                return false;
+            }
+
+            // 再检查是否在Redis黑名单中
+            String tokenHash = JwtUtil.hashToken(token);
+            return !redisUtil.isTokenBlacklisted(tokenHash);
+        }).onErrorReturn(false);
     }
 
     /**
@@ -149,7 +159,7 @@ public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
             
             logger.info("User authenticated: userId={}, role={}", userId, role);
             
-            // 生成内部认证信息（简化版，不再使用时间戳）
+            // 生成内部认证信息
             String internalToken = generateInternalToken(exchange.getRequest());
 
             // 将用户信息和内部认证信息添加到请求头
@@ -158,6 +168,7 @@ public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
                     .header("X-User-Role", role)
                     .header("X-Internal-Token", internalToken)
                     .header("X-Gateway-Source", "mobilepay-gateway")
+                    .header("Authorization", token)
                     .build();
             
             return exchange.mutate().request(modifiedRequest).build();

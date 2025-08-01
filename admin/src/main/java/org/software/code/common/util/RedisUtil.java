@@ -20,6 +20,19 @@ public class RedisUtil {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
+
+        /**
+     * 向 Redis 中设置带过期时间的键值对
+     *
+     * @param key 要设置的键，类型为字符串
+     * @param value 要设置的值，类型为字符串
+     * @param timeout 过期时间
+     * @param unit 时间单位
+     */
+    public void setValue(String key, String value, long timeout, java.util.concurrent.TimeUnit unit) {
+        stringRedisTemplate.opsForValue().set(key, value, timeout, unit);
+    }
+
     /**
      * 向 Redis 中设置键值对的方法。
      * 使用 StringRedisTemplate 的 opsForValue() 方法获取操作字符串类型值的对象，
@@ -57,5 +70,40 @@ public class RedisUtil {
     public void deleteValue(String key) {
         // 调用 StringRedisTemplate 的 delete() 方法根据键从 Redis 中删除对应的键值对
         stringRedisTemplate.delete(key);
+    }
+
+        /**
+     * 检查Token是否在黑名单中
+     *
+     * @param tokenHash token的哈希值
+     * @return 是否在黑名单中
+     */
+    public boolean isTokenBlacklisted(String tokenHash) {
+        try {
+            String blacklistKey = "jwt:blacklist:" + tokenHash;
+            String value = getValue(blacklistKey);
+            return value != null;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * 将Token添加到黑名单
+     *
+     * @param tokenHash token的哈希值
+     * @param userId 用户ID
+     * @param ttlSeconds TTL秒数
+     */
+    public void addTokenToBlacklist(String tokenHash, Long userId, long ttlSeconds) {
+        try {
+            String blacklistKey = "jwt:blacklist:" + tokenHash;
+            String value = userId + ":" + System.currentTimeMillis();
+            if (ttlSeconds > 0) {
+                setValue(blacklistKey, value, ttlSeconds, java.util.concurrent.TimeUnit.SECONDS);
+            }
+        } catch (Exception e) {
+            // 静默处理错误
+        }
     }
 }
