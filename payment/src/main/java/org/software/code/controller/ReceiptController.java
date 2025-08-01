@@ -12,12 +12,9 @@ import org.software.code.vo.ReceiptCodeVo;
 import org.software.code.vo.SetAmountVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
 
 @Tag(name = "收款码相关接口", description = "收款码生成、刷新等操作")
 @Validated
@@ -48,7 +45,8 @@ public class ReceiptController {
         if (amount != null) {
             return receiptService.getReceiptCode(authorization, amount);
         } else {
-        return receiptService.getReceiptCode(authorization);
+            return receiptService.getReceiptCode(authorization);
+        }
     }
 
     @Operation(summary = "设置收款金额", description = "设置收款码的固定金额")
