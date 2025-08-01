@@ -10,17 +10,23 @@ spring:
     name: gateway
   cloud:
     nacos:
+#      config:
+#        server-addr: graywolf.top:6202
+#        namespace: public
+#        username: nacos
+#        password: mobilepay250715
+#        file-extension: yaml
+#      discovery:
+#        server-addr: graywolf.top:6202
+#        namespace: public
+#        username: nacos
+#        password: mobilepay250715
       config:
-        server-addr: graywolf.top:6202
+        server-addr: localhost:8848
         namespace: public
-        username: nacos
-        password: mobilepay250715
-        file-extension: yaml
       discovery:
-        server-addr: graywolf.top:6202
+        server-addr: localhost:8848
         namespace: public
-        username: nacos
-        password: mobilepay250715
     gateway:
       routes:
         - id: appUser

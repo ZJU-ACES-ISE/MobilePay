@@ -4,13 +4,14 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.concurrent.TimeUnit;
 
 /**
  * RedisUtil 是一个工具类，用于简化与 Redis 数据库的交互操作。
  * 通过使用 Spring Data Redis 提供的 StringRedisTemplate，该类封装了一些常用的 Redis 操作，
  * 如设置键值对、获取键对应的值以及删除键值对等，方便在项目中使用 Redis 进行数据缓存和存储。
  *
- * @author “101”计划《软件工程》实践教材案例团队
+ * @author "101"计划《软件工程》实践教材案例团队
  */
 @Component
 public class RedisUtil {
@@ -57,5 +58,28 @@ public class RedisUtil {
     public void deleteValue(String key) {
         // 调用 StringRedisTemplate 的 delete() 方法根据键从 Redis 中删除对应的键值对
         stringRedisTemplate.delete(key);
+    }
+    
+    /**
+     * 设置某个键的过期时间
+     *
+     * @param key 键
+     * @param timeout 过期时长
+     * @param unit 时间单位，如 TimeUnit.MINUTES
+     */
+    public void setExpire(String key, long timeout, TimeUnit unit) {
+        stringRedisTemplate.expire(key, timeout, unit);
+    }
+
+    /**
+     * 判断某个键是否存在于 Redis 中
+     *
+     * @param key 要判断的键
+     * @return 如果存在返回 true，否则返回 false
+     */
+    public boolean hasKey(String key) {
+        Boolean result = stringRedisTemplate.hasKey(key);
+        // 防止返回 null，做一次非空判断
+        return Boolean.TRUE.equals(result);
     }
 }

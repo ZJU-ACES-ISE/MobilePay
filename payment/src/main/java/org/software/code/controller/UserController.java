@@ -6,39 +6,34 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.software.code.common.result.Result;
-import org.software.code.service.ReceiptService;
-import org.software.code.vo.ReceiptCodeVo;
+import org.software.code.service.UserService;
+import org.software.code.vo.UserBalanceVo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "收款码相关接口", description = "收款码生成、刷新等操作")
-@Validated
+@Tag(name = "用户相关接口", description = "用户信息、余额查询等操作")
 @RestController
-@RequestMapping("/receipt")
-public class ReceiptController {
+@RequestMapping("/user")
+public class UserController {
 
     @Autowired
-    private ReceiptService receiptService;
+    private UserService userService;
 
     /**
-     * 获取收款码（刷新收款码）
+     * 查询用户余额
      * @param authorization Bearer类型Token认证
-     * @return 收款码信息
+     * @return 用户余额信息
      */
-    @Operation(summary = "获取收款码（刷新收款码）", description = "用于获取用户的收款码")
+    @Operation(summary = "查询用户余额", description = "查询用户余额")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "查询成功"),
         @ApiResponse(responseCode = "400", description = "Token无效或已过期"),
         @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    @GetMapping("/code")
-    public Result<ReceiptCodeVo> getReceiptCode(
+    @GetMapping("/balance")
+    public Result<UserBalanceVo> getUserBalance(
             @Parameter(description = "Bearer 类型 Token 认证", required = true)
             @RequestHeader("Authorization") String authorization) {
-        return receiptService.getReceiptCode(authorization);
+        return userService.getUserBalance(authorization);
     }
-}
+} 
