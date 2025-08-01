@@ -9,6 +9,7 @@ import org.software.code.entity.ReceiptCode;
 import org.software.code.entity.ReceiptTransaction;
 import org.software.code.mapper.ReceiptCodeMapper;
 import org.software.code.mapper.ReceiptTransactionMapper;
+import org.software.code.mapper.UserMapper;
 import org.software.code.service.ReceiptService;
 import org.software.code.vo.ReceiptCodeVo;
 import org.software.code.vo.ReceiptRecordVo;
