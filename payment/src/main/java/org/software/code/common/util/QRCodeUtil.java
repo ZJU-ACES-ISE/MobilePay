@@ -39,20 +39,43 @@ public class QRCodeUtil {
      */
     public String generateQRCodeAndUpload(String content, String fileName) {
         try {
+            // 调试信息：检查参数
+            System.out.println("=== QRCodeUtil Debug Info ===");
+            System.out.println("content: " + content);
+            System.out.println("fileName: " + fileName);
+            System.out.println("ossUtil: " + ossUtil);
+            
+            if (ossUtil == null) {
+                throw new RuntimeException("OSSUtil 注入失败，ossUtil 为 null！请检查 Spring 配置");
+            }
+            
             // 生成二维码图片
             BufferedImage qrImage = generateQRCodeImage(content, DEFAULT_WIDTH, DEFAULT_HEIGHT);
+            System.out.println("二维码图片生成成功");
             
             // 将图片转换为字节数组
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ImageIO.write(qrImage, DEFAULT_FORMAT, baos);
             byte[] imageBytes = baos.toByteArray();
             
-            // 上传到阿里云OSS
-            String ossUrl = ossUtil.uploadBytes(imageBytes, fileName + ".png", "qrcodes");
+            System.out.println("图片字节数组长度: " + imageBytes.length);
             
-            return ossUrl;
+            // 上传到阿里云OSS
+            String objectKey = fileName + ".png";
+            System.out.println("准备上传到OSS，objectKey: " + objectKey);
+            
+            // 上传文件到OSS
+            String ossUrl = ossUtil.uploadBytes(imageBytes, objectKey);
+            System.out.println("OSS上传成功，直接URL: " + ossUrl);
+
+            // 由于bucket是私有的，生成预签名URL用于访问
+            String presignedUrl = ossUtil.generatePresignedUrl(objectKey, 60); // 60分钟有效期
+            System.out.println("预签名URL: " + presignedUrl);
+
+            return presignedUrl;
             
         } catch (Exception e) {
+            System.err.println("生成二维码失败，错误信息: " + e.getMessage());
             e.printStackTrace();
             throw new RuntimeException("生成二维码失败", e);
         }

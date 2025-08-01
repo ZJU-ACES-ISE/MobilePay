@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.software.code.common.except.BusinessException;
 import org.software.code.common.except.ExceptionEnum;
+import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -17,7 +18,7 @@ import java.util.Map;
  * JWTUtil 是一个工具类，用于处理 JSON Web Token（JWT）的生成操作。
  * 验证功能由网关统一处理，此类主要负责生成Token。
  */
-
+@Component
 public class JwtUtil {
 
     private static final Logger logger = LogManager.getLogger(JwtUtil.class);

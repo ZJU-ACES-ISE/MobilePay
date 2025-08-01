@@ -12,7 +12,8 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @EnableFeignClients
 @EnableCaching
 @MapperScan("org.software.code.mapper")
-public class PaymentApplication {
+public class
+PaymentApplication {
     public static void main(String[] args) {
         SpringApplication.run(PaymentApplication.class, args);
     }
