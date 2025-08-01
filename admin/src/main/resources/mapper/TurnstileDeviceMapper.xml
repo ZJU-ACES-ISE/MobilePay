@@ -12,13 +12,14 @@
         <result column="status" property="status" />
         <result column="last_heartbeat" property="lastHeartbeat" />
         <result column="firmware_version" property="firmwareVersion" />
+        <result column="type" property="type" />
         <result column="created_time" property="createdTime" />
         <result column="updated_time" property="updatedTime" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id, device_code, site_id, device_type, device_name, status, last_heartbeat, firmware_version, created_time, updated_time
+        id, device_code, site_id, device_type, device_name, status, last_heartbeat, firmware_version, type, created_time, updated_time
     </sql>
 
 </mapper>

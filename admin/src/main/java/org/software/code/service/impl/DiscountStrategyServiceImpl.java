@@ -155,9 +155,8 @@ public class DiscountStrategyServiceImpl extends ServiceImpl<DiscountStrategyMap
             strategy.setCreatedBy(adminId);
             strategy.setStatus(AdminConstants.DiscountStrategyStatus.ACTIVE);
             strategy.setUsedCount(0);
-            strategy.setCreatedTime(Timestamp.valueOf(LocalDateTime.now()));
-            strategy.setUpdatedTime(Timestamp.valueOf(LocalDateTime.now()));
-
+            strategy.setCreatedTime(LocalDateTime.now());
+            strategy.setUpdatedTime(LocalDateTime.now());
             discountStrategyMapper.insert(strategy);
 
             logger.info("折扣策略创建成功，策略ID：{}", strategy.getId());

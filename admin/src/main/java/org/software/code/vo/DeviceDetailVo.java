@@ -74,6 +74,18 @@ public class DeviceDetailVo {
     private String statusName;
 
     /**
+     * 交通类型
+     */
+    @JsonProperty("type")
+    private String type;
+
+    /**
+     * 交通类型名称
+     */
+    @JsonProperty("type_name")
+    private String typeName;
+
+    /**
      * 设备描述
      */
     @JsonProperty("description")
@@ -202,6 +214,18 @@ public class DeviceDetailVo {
         private String statusName;
 
         /**
+         * 交通类型
+         */
+        @JsonProperty("type")
+        private String type;
+
+        /**
+         * 交通类型名称
+         */
+        @JsonProperty("type_name")
+        private String typeName;
+
+        /**
          * 获取站点状态名称
          */
         public String getStatusName() {
@@ -213,6 +237,18 @@ public class DeviceDetailVo {
                 return "维护中";
             }
             return "未知状态";
+        }
+
+        /**
+         * 获取交通类型名称
+         */
+        public String getTypeName() {
+            if ("SUBWAY".equals(this.type)) {
+                return "地铁";
+            } else if ("BUS".equals(this.type)) {
+                return "公交";
+            }
+            return "未知类型";
         }
     }
 
@@ -289,5 +325,17 @@ public class DeviceDetailVo {
             return "故障";
         }
         return "未知状态";
+    }
+
+    /**
+     * 获取交通类型名称
+     */
+    public String getTypeName() {
+        if ("SUBWAY".equals(this.type)) {
+            return "地铁";
+        } else if ("BUS".equals(this.type)) {
+            return "公交";
+        }
+        return "未知类型";
     }
 }

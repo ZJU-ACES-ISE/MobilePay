@@ -97,6 +97,13 @@ public class SiteCreateDto {
     private String lineName;
 
     /**
+     * 交通类型：SUBWAY, BUS
+     */
+    @Pattern(regexp = "^(SUBWAY|BUS)$", message = "交通类型只能是SUBWAY或BUS")
+    @JsonProperty("type")
+    private String type;
+
+    /**
      * 营业开始时间（HH:mm格式）
      */
     @Pattern(regexp = "^([01]\\d|2[0-3]):[0-5]\\d$", message = "营业开始时间格式不正确，应为HH:mm")

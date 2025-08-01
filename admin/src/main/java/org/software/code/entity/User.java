@@ -4,13 +4,11 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import java.io.Serializable;
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.util.Date;
 
 /**
  * <p>
@@ -18,6 +16,7 @@ import java.util.Date;
  * </p>
  *
  * @author "101"计划《软件工程》实践教材案例团队
+ * @since 2025-07-31
  */
 @Getter
 @Setter
@@ -33,36 +32,26 @@ public class User implements Serializable {
     @TableField("phone")
     private String phone;
 
-    @TableField("username")
-    private String username;
+    @TableField("login_password")
+    private String loginPassword;
 
-    @TableField("real_name")
-    private String realName;
+    @TableField("pay_password")
+    private String payPassword;
 
-    @TableField("id_card")
-    private String idCard;
+    @TableField("nickname")
+    private String nickname;
 
-    @TableField("email")
-    private String email;
-
-    @TableField("password")
-    private String password;
-
-    @TableField("payment_password")
-    private String paymentPassword;
-
-    @TableField("avatar")
-    private String avatar;
+    @TableField("avatar_url")
+    private String avatarUrl;
 
     @TableField("status")
     private String status;
 
-    @TableField("balance")
-    private BigDecimal balance;
+    @TableField("create_time")
+    private LocalDateTime createTime;
 
-    @TableField("created_time")
-    private Date createdTime;
+    @TableField("update_time")
+    private LocalDateTime updateTime;
 
-    @TableField("updated_time")
-    private Date updatedTime;
+
 }

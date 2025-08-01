@@ -13,6 +13,7 @@
         <result column="longitude" property="longitude" />
         <result column="latitude" property="latitude" />
         <result column="address" property="address" />
+        <result column="type" property="type" />
         <result column="status" property="status" />
         <result column="created_time" property="createdTime" />
         <result column="updated_time" property="updatedTime" />
@@ -20,7 +21,7 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id, site_code, site_name, city, city_code, line_name, longitude, latitude, address, status, created_time, updated_time
+        id, site_code, site_name, city, city_code, line_name, longitude, latitude, address, type, status, created_time, updated_time
     </sql>
 
 </mapper>

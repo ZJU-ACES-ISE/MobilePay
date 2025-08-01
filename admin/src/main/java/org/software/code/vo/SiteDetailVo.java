@@ -81,6 +81,18 @@ public class SiteDetailVo {
     private String siteTypeName;
 
     /**
+     * 交通类型
+     */
+    @JsonProperty("type")
+    private String type;
+
+    /**
+     * 交通类型名称
+     */
+    @JsonProperty("type_name")
+    private String typeName;
+
+    /**
      * 站点描述
      */
     @JsonProperty("description")
@@ -241,6 +253,18 @@ public class SiteDetailVo {
             return "主站点";
         } else if ("BRANCH".equals(this.siteType)) {
             return "分站点";
+        }
+        return "未知类型";
+    }
+
+    /**
+     * 获取交通类型名称
+     */
+    public String getTypeName() {
+        if ("SUBWAY".equals(this.type)) {
+            return "地铁";
+        } else if ("BUS".equals(this.type)) {
+            return "公交";
         }
         return "未知类型";
     }

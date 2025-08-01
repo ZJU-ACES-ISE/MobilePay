@@ -44,6 +44,12 @@ public class SiteSearchDto {
     private String lineName;
 
     /**
+     * 交通类型：SUBWAY, BUS
+     */
+    @JsonProperty("type")
+    private String type;
+
+    /**
      * 创建时间开始
      */
     @JsonProperty("start_time")

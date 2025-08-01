@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * <p>
@@ -71,7 +72,7 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements
         }
 
         // 4. 检查账户状态
-        if (!admin.isActive()) {
+        if (!Objects.equals(admin.getStatus(), "ACTIVE")) {
             logger.error("Admin account is not active: {}, status: {}", admin.getUsername(), admin.getStatus());
             throw new BusinessException(ExceptionEnum.ADMIN_ACCOUNT_INACTIVE);
         }
@@ -172,7 +173,7 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements
                 throw new BusinessException(ExceptionEnum.ADMIN_NOT_FOUND);
             }
 
-            if (!admin.isActive()) {
+            if (!Objects.equals(admin.getStatus(), "ACTIVE")) {
                 logger.error("Admin account is not active: userId={}, status={}", userId, admin.getStatus());
                 throw new BusinessException(ExceptionEnum.ADMIN_ACCOUNT_INACTIVE);
             }

@@ -4,13 +4,12 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.util.Date;
 
 /**
  * <p>
@@ -18,6 +17,7 @@ import java.util.Date;
  * </p>
  *
  * @author "101"计划《软件工程》实践教材案例团队
+ * @since 2025-07-31
  */
 @Getter
 @Setter
@@ -55,10 +55,10 @@ public class DiscountStrategy implements Serializable {
     private String targetCities;
 
     @TableField("start_time")
-    private Date startTime;
+    private LocalDateTime startTime;
 
     @TableField("end_time")
-    private Date endTime;
+    private LocalDateTime endTime;
 
     @TableField("usage_limit")
     private Integer usageLimit;
@@ -73,10 +73,10 @@ public class DiscountStrategy implements Serializable {
     private Long createdBy;
 
     @TableField("created_time")
-    private Date createdTime;
+    private LocalDateTime createdTime;
 
     @TableField("updated_time")
-    private Date updatedTime;
+    private LocalDateTime updatedTime;
 
 
 }

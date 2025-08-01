@@ -2,7 +2,6 @@ package org.software.code.service;
 
 import org.software.code.vo.DeviceStatisticsVo;
 import org.software.code.vo.DiscountStatisticsVo;
-import org.software.code.vo.TravelStatisticsVo;
 import org.software.code.vo.UserStatisticsVo;
 
 /**
@@ -11,7 +10,6 @@ import org.software.code.vo.UserStatisticsVo;
  * <p>本服务接口封装了统计分析相关的所有业务逻辑，包括：</p>
  * <ul>
  *   <li>用户数据统计：注册用户数、活跃用户数、用户增长趋势</li>
- *   <li>出行数据分析：出行次数、出行路线、高峰时段、费用统计</li>
  *   <li>设备运营统计：设备使用率、故障率、维护成本、性能指标</li>
  *   <li>折扣策略效果：策略使用情况、成本效益、用户转化率</li>
  *   <li>综合运营报表：收入分析、成本控制、盈利能力评估</li>
@@ -58,28 +56,6 @@ public interface StatisticsService {
      * @see UserStatisticsVo 用户统计数据结构说明
      */
     UserStatisticsVo getUserStatistics(String startDate, String endDate);
-
-    /**
-     * 获取出行统计数据方法
-     * 
-     * <p>此方法用于获取指定时间范围和城市的出行相关统计数据，分析用户出行行为
-     * 和系统使用情况。</p>
-     * 
-     * <p>统计内容包括：</p>
-     * <ul>
-     *   <li>出行频次：总出行次数、人均出行次数、高峰时段分布</li>
-     *   <li>出行距离：平均出行距离、最受欢迎路线、换乘统计</li>
-     *   <li>出行费用：总收入、平均票价、优惠使用情况</li>
-     *   <li>出行模式：工作日vs周末、季节性变化趋势</li>
-     * </ul>
-     *
-     * @param startDate 统计开始日期，格式为yyyy-MM-dd
-     * @param endDate 统计结束日期，格式为yyyy-MM-dd
-     * @param city 城市名称，可选，为空时统计所有城市
-     * @return 出行统计数据对象
-     * @see TravelStatisticsVo 出行统计数据结构说明
-     */
-    TravelStatisticsVo getTravelStatistics(String startDate, String endDate, String city);
 
     /**
      * 获取设备统计数据方法

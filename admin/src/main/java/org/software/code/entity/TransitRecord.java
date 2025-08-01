@@ -4,26 +4,26 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.util.Date;
 
 /**
  * <p>
  * 
  * </p>
  *
- * @author “101”计划《软件工程》实践教材案例团队
+ * @author "101"计划《软件工程》实践教材案例团队
+ * @since 2025-07-31
  */
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("travel_record")
-public class TravelRecord implements Serializable {
+@TableName("transit_record")
+public class TransitRecord implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -32,6 +32,9 @@ public class TravelRecord implements Serializable {
 
     @TableField("user_id")
     private Long userId;
+
+    @TableField("mode")
+    private String mode;
 
     @TableField("entry_site_id")
     private Long entrySiteId;
@@ -46,10 +49,10 @@ public class TravelRecord implements Serializable {
     private Long exitDeviceId;
 
     @TableField("entry_time")
-    private Date entryTime;
+    private LocalDateTime entryTime;
 
     @TableField("exit_time")
-    private Date exitTime;
+    private LocalDateTime exitTime;
 
     @TableField("amount")
     private BigDecimal amount;
@@ -61,16 +64,19 @@ public class TravelRecord implements Serializable {
     private BigDecimal actualAmount;
 
     @TableField("status")
-    private String status;
+    private Integer status;
 
-    @TableField("payment_method")
-    private String paymentMethod;
+    @TableField("reason")
+    private String reason;
+
+    @TableField("transaction_id")
+    private String transactionId;
 
     @TableField("created_time")
-    private Date createdTime;
+    private LocalDateTime createdTime;
 
     @TableField("updated_time")
-    private Date updatedTime;
+    private LocalDateTime updatedTime;
 
 
 }

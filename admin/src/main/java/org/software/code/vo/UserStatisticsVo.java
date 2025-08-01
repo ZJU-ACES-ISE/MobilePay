@@ -22,7 +22,5 @@ public class UserStatisticsVo {
 
     private Long newUsersToday;
 
-    private Long newUsersThisWeek;
-
     private Long newUsersThisMonth;
 }

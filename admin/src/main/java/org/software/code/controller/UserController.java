@@ -11,8 +11,12 @@ import org.software.code.common.except.BusinessException;
 import org.software.code.common.result.Result;
 import org.software.code.dto.UserAuditDto;
 import org.software.code.dto.UserSearchDto;
+import org.software.code.service.TransferRecordService;
+import org.software.code.service.TransitRecordService;
 import org.software.code.service.UserService;
-import org.software.code.vo.TravelRecordVo;
+import org.software.code.vo.PendingUserVo;
+import org.software.code.vo.TransferRecordVo;
+import org.software.code.vo.TransitRecordVo;
 import org.software.code.vo.UserDetailVo;
 import org.software.code.vo.UserListVo;
 import org.springframework.validation.annotation.Validated;
@@ -60,6 +64,12 @@ public class UserController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private TransitRecordService transitRecordService;
+
+    @Resource
+    private TransferRecordService transferRecordService;
 
     /**
      * 分页查询用户列表接口
@@ -145,7 +155,6 @@ public class UserController {
      * <ul>
      *   <li>手机号码：支持部分匹配，如输入1388可匹配13888888888</li>
      *   <li>用户名：支持前后缀匹配，不区分大小写</li>
-     *   <li>真实姓名：支持部分匹配，如输入“张”可匹配“张三”</li>
      * </ul>
      * 
      * <p>返回结果按照相关性排序，完全匹配的结果优先显示。</p>
@@ -156,7 +165,7 @@ public class UserController {
      * @see UserListVo 用户列表项数据说明
      */
     @GetMapping("/search")
-    @Operation(summary = "搜索用户", description = "根据关键字搜索用户（手机号、用户名、真实姓名）")
+    @Operation(summary = "搜索用户", description = "根据关键字搜索用户（手机号、用户名）")
     @AdminRole()
     public Result<?> searchUsers(
             @Parameter(description = "搜索关键字") @RequestParam @NotEmpty String keyword,
@@ -169,25 +178,31 @@ public class UserController {
     }
 
     /**
-     * 获取待审核用户列表接口
+     * 获取待审核用户列表接口（基于身份验证状态）
      * 
-     * <p>此接口用于管理员查看所有处于待审核状态的用户，方便进行集中审核处理。</p>
+     * <p>此接口查询所有身份验证状态为待审核的用户，返回用户基本信息和身份验证详细信息的合并数据。</p>
      * 
-     * <p>待审核用户包括：</p>
+     * <p>接口特性：</p>
      * <ul>
-     *   <li>新注册的用户，尚未通过身份认证</li>
-     *   <li>信息变更的用户，需要重新审核</li>
-     *   <li>之前被拒绝后重新提交的用户</li>
+     *   <li>查询条件：user_verification.status = 'pending'</li>
+     *   <li>排序规则：按身份验证提交时间降序</li>
+     *   <li>数据合并：用户基本信息 + 身份验证详细信息</li>
+     *   <li>权限控制：仅管理员可访问</li>
      * </ul>
      * 
-     * <p>返回的用户列表按照提交时间倒序排列，最新提交的审核申请优先显示。</p>
+     * <p>返回的数据包含：</p>
+     * <ul>
+     *   <li>用户信息：手机号、昵称、头像、注册时间等</li>
+     *   <li>身份验证：真实姓名、身份证、证件照片等</li>
+     *   <li>审核状态：验证状态、提交时间、拒绝原因等</li>
+     * </ul>
      *
-     * @param pageNum 页码，从1开始，默认为1
-     * @param pageSize 每页记录数，默认为10
-     * @param adminId 当前管理员ID
-     * @param adminRole 当前管理员角色
-     * @return 分页的待审核用户列表
-     * @see UserListVo 用户列表项数据说明
+     * @param pageNum  页码，从1开始，默认为1
+     * @param pageSize 每页记录数，默认为10，建议范围10-50
+     * @param adminId  当前操作管理员ID，从请求头获取
+     * @param adminRole 当前操作管理员角色，从请求头获取
+     * @return 返回待审核用户分页列表，包含总数和当前页数据
+     * @see PendingUserVo 待审核用户数据结构说明
      */
     @GetMapping("/pending")
     @Operation(summary = "获取待审核用户", description = "分页获取待审核的用户列表")
@@ -200,7 +215,7 @@ public class UserController {
         
         logger.info("管理员查询待审核用户列表，管理员ID：{}，页码：{}，页大小：{}", adminId, pageNum, pageSize);
         
-        Page<UserListVo> pendingUsers = userService.getPendingUsers(pageNum, pageSize);
+        Page<PendingUserVo> pendingUsers = userService.getPendingUsers(pageNum, pageSize);
         return Result.success(pendingUsers);
     }
 
@@ -304,7 +319,7 @@ public class UserController {
      */
     @PostMapping("/{id}/enable")
     @Operation(summary = "启用用户", description = "启用被禁用的用户账号")
-    @AdminRole("ADMIN")
+    @AdminRole()
     public Result<?> enableUser(
             @Parameter(description = "用户ID") @PathVariable @NotNull Long id,
             @RequestHeader("X-User-Id") String adminId,
@@ -376,7 +391,7 @@ public class UserController {
      * @param adminRole 当前管理员角色
      * @return 分页的出行记录数据
      * @throws BusinessException 当用户不存在时抛出
-     * @see TravelRecordVo 出行记录数据说明
+     * @see TransitRecordVo 出行记录数据说明
      */
     @GetMapping("/{id}/travel-records")
     @Operation(summary = "查看用户出行记录", description = "查看指定用户的出行记录")
@@ -390,7 +405,52 @@ public class UserController {
         
         logger.info("管理员查询用户出行记录，管理员ID：{}，用户ID：{}，页码：{}，页大小：{}", adminId, id, pageNum, pageSize);
         
-        Page<TravelRecordVo> travelRecords = userService.getUserTravelRecords(id, pageNum, pageSize);
-        return Result.success(travelRecords);
+        Page<TransitRecordVo> transitRecords = transitRecordService.getUserTransitRecords(id, pageNum, pageSize);
+        return Result.success(transitRecords);
+    }
+
+    /**
+     * 查看用户转账记录接口
+     * 
+     * <p>此接口允许管理员查看指定用户的转账记录，包括充值、提现、转账等所有资金流动记录。</p>
+     * 
+     * <p>转账记录包含的信息：</p>
+     * <ul>
+     *   <li>转账基本信息：转账编号、转账类型、转账金额</li>
+     *   <li>交易参与方：用户信息、目标账户信息</li>
+     *   <li>交易详情：优惠金额、实际金额、完成时间</li>
+     *   <li>业务信息：业务类别、备注信息</li>
+     * </ul>
+     * 
+     * <p>支持的转账类型：</p>
+     * <ul>
+     *   <li>充值：用户向平台账户充值</li>
+     *   <li>提现：用户从平台账户提现到银行卡</li>
+     *   <li>转账：用户间转账或向第三方转账</li>
+     * </ul>
+     *
+     * @param id 用户ID，必填
+     * @param pageNum 页码，默认为1
+     * @param pageSize 页大小，默认为10，建议范围：1-100
+     * @param adminId 当前管理员ID，从请求头获取
+     * @param adminRole 当前管理员角色，从请求头获取
+     * @return 分页的转账记录数据
+     * @throws BusinessException 当用户不存在时抛出
+     * @see TransferRecordVo 转账记录数据说明
+     */
+    @GetMapping("/{id}/transfer-records")
+    @Operation(summary = "查看用户转账记录", description = "查看指定用户的转账记录")
+    @AdminRole()
+    public Result<?> getUserTransferRecords(
+            @Parameter(description = "用户ID") @PathVariable @NotNull Long id,
+            @Parameter(description = "页码") @RequestParam(defaultValue = "1") Integer pageNum,
+            @Parameter(description = "页大小") @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestHeader("X-User-Id") String adminId,
+            @RequestHeader("X-User-Role") String adminRole) {
+        
+        logger.info("管理员查询用户转账记录，管理员ID：{}，用户ID：{}，页码：{}，页大小：{}", adminId, id, pageNum, pageSize);
+        
+        Page<TransferRecordVo> transferRecords = transferRecordService.getUserTransferRecords(id, pageNum, pageSize);
+        return Result.success(transferRecords);
     }
 }

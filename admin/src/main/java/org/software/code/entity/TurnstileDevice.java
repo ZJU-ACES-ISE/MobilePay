@@ -4,19 +4,19 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import java.io.Serializable;
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-
-import java.io.Serializable;
-import java.util.Date;
 
 /**
  * <p>
  * 
  * </p>
  *
- * @author “101”计划《软件工程》实践教材案例团队
+ * @author "101"计划《软件工程》实践教材案例团队
+ * @since 2025-07-31
  */
 @Getter
 @Setter
@@ -45,16 +45,19 @@ public class TurnstileDevice implements Serializable {
     private String status;
 
     @TableField("last_heartbeat")
-    private Date lastHeartbeat;
+    private LocalDateTime lastHeartbeat;
 
     @TableField("firmware_version")
     private String firmwareVersion;
 
+    @TableField("type")
+    private String type;
+
     @TableField("created_time")
-    private Date createdTime;
+    private LocalDateTime createdTime;
 
     @TableField("updated_time")
-    private Date updatedTime;
+    private LocalDateTime updatedTime;
 
 
 }
