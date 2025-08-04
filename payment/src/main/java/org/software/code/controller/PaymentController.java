@@ -15,9 +15,7 @@ import org.software.code.vo.QRCodeParseResultVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,37 +33,33 @@ public class PaymentController {
     /**
      * 识别二维码并返回支付信息
      * @param authorization Bearer类型Token认证（可选）
-     * @param imageFile 二维码图片文件
+     * @param imageUrl 二维码图片URL地址
      * @return 支付信息
      */
-    @Operation(summary = "识别二维码并返回支付信息", description = "根据二维码识别出支付信息")
+    @Operation(summary = "识别二维码并返回支付信息", description = "根据二维码URL识别出支付信息")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "识别成功"),
-        @ApiResponse(responseCode = "400", description = "无效的图片或二维码格式不正确"),
+        @ApiResponse(responseCode = "400", description = "无效的图片URL或二维码格式不正确"),
         @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
     @PostMapping(value = "/parse-code")
     public Result<QRCodeParseResultVo> parseQRCode(
             @Parameter(description = "Bearer 类型 Token 认证", required = false)
             @RequestHeader(value = "Authorization", required = false) String authorization,
-            @Parameter(description = "二维码图片文件", required = true)
-            @RequestParam("image") MultipartFile imageFile) {
+            @Parameter(description = "二维码图片URL地址", required = true)
+            @RequestParam("imageUrl") String imageUrl) {
         try {
-            logger.info("接收到文件上传请求，文件名: {}, 文件大小: {} bytes", 
-                    imageFile.getOriginalFilename(), imageFile.getSize());
-            
-            // 将MultipartFile转换为Base64字符串
-            String base64Image = "data:image/png;base64," + Base64.getEncoder().encodeToString(imageFile.getBytes());
+            logger.info("接收到二维码URL解析请求: {}", imageUrl);
             
             // 创建DTO对象
             QRCodeParseDto qrCodeParseDto = new QRCodeParseDto();
-            qrCodeParseDto.setQrCode(base64Image);
+            qrCodeParseDto.setQrCode(imageUrl);
             
-            logger.info("图片转换为Base64成功，准备调用服务解析二维码");
+            logger.info("准备调用服务解析二维码");
             return paymentService.parseQRCode(authorization, qrCodeParseDto);
         } catch (Exception e) {
-            logger.error("处理图片时发生错误", e);
-            return Result.instance(ResultEnum.FAILED.getCode(), "图片处理失败: " + e.getMessage(), null);
+            logger.error("处理二维码URL时发生错误", e);
+            return Result.instance(ResultEnum.FAILED.getCode(), "二维码处理失败: " + e.getMessage(), null);
         }
     }
     

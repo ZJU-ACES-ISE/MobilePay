@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.software.code.mapper.TransitRecordMapper">
+    
+    <!-- 基本结果映射 -->
+    <resultMap id="BaseResultMap" type="org.software.code.entity.TransitRecord">
+        <id column="id" property="id" />
+        <result column="user_id" property="userId" />
+        <result column="mode" property="mode" />
+        <result column="entry_site_id" property="entrySiteId" />
+        <result column="exit_site_id" property="exitSiteId" />
+        <result column="entry_device_id" property="entryDeviceId" />
+        <result column="exit_device_id" property="exitDeviceId" />
+        <result column="entry_time" property="entryTime" />
+        <result column="exit_time" property="exitTime" />
+        <result column="amount" property="amount" />
+        <result column="discount_amount" property="discountAmount" />
+        <result column="actual_amount" property="actualAmount" />
+        <result column="status" property="status" />
+        <result column="reason" property="reason" />
+        <result column="transaction_id" property="transactionId" />
+        <result column="created_time" property="createdTime" />
+        <result column="updated_time" property="updatedTime" />
+    </resultMap>
+    
+    <!-- 带站点信息的结果映射 -->
+    <resultMap id="TransitRecordWithSitesMap" type="java.util.Map">
+        <id column="id" property="id" />
+        <result column="user_id" property="userId" />
+        <result column="mode" property="mode" />
+        <result column="entry_site_id" property="entrySiteId" />
+        <result column="exit_site_id" property="exitSiteId" />
+        <result column="entry_time" property="entryTime" />
+        <result column="exit_time" property="exitTime" />
+        <result column="amount" property="amount" />
+        <result column="actual_amount" property="actualAmount" />
+        <result column="status" property="status" />
+        <result column="transaction_id" property="transactionId" />
+        <result column="entry_site_name" property="entrySiteName" />
+        <result column="entry_site_line" property="entrySiteLine" />
+        <result column="exit_site_name" property="exitSiteName" />
+        <result column="exit_site_line" property="exitSiteLine" />
+    </resultMap>
+    
+    <!-- 查询用户的出行记录，包含站点信息 -->
+    <select id="selectUserTransitRecordsWithSites" resultMap="TransitRecordWithSitesMap">
+        SELECT 
+            tr.id, tr.user_id, tr.mode, tr.entry_site_id, tr.exit_site_id,
+            tr.entry_time, tr.exit_time, tr.amount, tr.actual_amount, tr.status, tr.transaction_id,
+            es.site_name as entry_site_name, es.line_name as entry_site_line,
+            xs.site_name as exit_site_name, xs.line_name as exit_site_line
+        FROM 
+            transit_record tr
+        LEFT JOIN 
+            site es ON tr.entry_site_id = es.id
+        LEFT JOIN 
+            site xs ON tr.exit_site_id = xs.id
+        WHERE 
+            tr.user_id = #{userId}
+        ORDER BY 
+            tr.entry_time DESC
+        LIMIT #{limit}
+    </select>
+    
+</mapper> 

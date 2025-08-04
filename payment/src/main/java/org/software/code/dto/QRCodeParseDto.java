@@ -10,8 +10,8 @@ import javax.validation.constraints.NotBlank;
 public class QRCodeParseDto {
     
     /**
-     * 二维码图片（Base64编码或网络URL）
+     * 二维码图片URL
      */
-    @NotBlank(message = "二维码图片不能为空")
+    @NotBlank(message = "二维码图片URL不能为空")
     private String qrCode;
 } 

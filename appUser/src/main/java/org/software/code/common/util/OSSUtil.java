@@ -1,4 +1,4 @@
-                                                                                                              package org.software.code.common.util;
+package org.software.code.common.util;
 
 import com.aliyun.oss.*;
 import com.aliyun.oss.common.auth.*;
@@ -221,4 +221,4 @@ public class OSSUtil {
             }
         }
     }
-}
+} 

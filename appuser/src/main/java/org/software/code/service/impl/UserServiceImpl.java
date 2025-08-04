@@ -22,9 +22,16 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.util.Date;
 import io.jsonwebtoken.Claims;
+import org.software.code.dto.ResetPasswordRequest;
+import org.software.code.common.result.ResultEnum;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class UserServiceImpl implements UserService {
+    private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
+
     @Autowired
     private UserMapper userMapper;
     
@@ -317,6 +324,81 @@ public class UserServiceImpl implements UserService {
             return Result.success("退出成功");
         } catch (Exception e) {
             return Result.failed("无效的登录状态");
+        }
+    }
+
+    /**
+     * 更新用户头像URL
+     * @param token JWT token
+     * @param avatarUrl 头像URL
+     * @return 更新结果
+     */
+    @Override
+    public Result<?> updateAvatarUrl(String token, String avatarUrl) {
+        try {
+            // 从token中解析用户ID
+            Long userId = JwtUtil.extractID(token);
+            if (userId == null) {
+                return Result.failed("无效的Token");
+            }
+            
+            // 查询用户是否存在
+            User user = userMapper.selectById(userId);
+            if (user == null) {
+                return Result.failed("用户不存在");
+            }
+            
+            // 更新头像URL
+            user.setAvatarUrl(avatarUrl);
+            user.setUpdateTime(LocalDateTime.now());
+            userMapper.updateById(user);
+            
+            return Result.success("头像更新成功");
+        } catch (Exception e) {
+            log.error("更新头像失败", e);
+            return Result.failed("更新头像失败: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 忘记密码（重置密码）
+     * @param request 重置密码请求
+     * @return 重置结果
+     */
+    @Override
+    public Result<?> resetPassword(ResetPasswordRequest request) {
+        try {
+            // 参数校验
+            if (request == null || request.getPhone() == null || request.getPhone().isEmpty()
+                    || request.getVerifyCode() == null || request.getVerifyCode().isEmpty()
+                    || request.getNewPassword() == null || request.getNewPassword().isEmpty()) {
+                return Result.failed("参数不完整");
+            }
+            
+            // 校验验证码
+            Result<?> verifyResult = verifyCodeService.checkVerifyCode(request.getPhone(), request.getVerifyCode(), "resetPassword");
+            if (verifyResult.getCode() != ResultEnum.SUCCESS.getCode()) {
+                return verifyResult;
+            }
+            
+            // 查询用户是否存在
+            QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("phone", request.getPhone());
+            User user = userMapper.selectOne(queryWrapper);
+            
+            if (user == null) {
+                return Result.failed("用户不存在");
+            }
+            
+            // 更新密码
+            user.setLoginPassword(passwordEncoder.encode(request.getNewPassword()));
+            user.setUpdateTime(LocalDateTime.now());
+            userMapper.updateById(user);
+            
+            return Result.success("密码重置成功");
+        } catch (Exception e) {
+            log.error("重置密码失败", e);
+            return Result.failed("重置密码失败: " + e.getMessage());
         }
     }
 } 

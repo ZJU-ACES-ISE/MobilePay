@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.software.code.mapper.SiteFareMapper">
+    
+    <!-- 基本结果映射 -->
+    <resultMap id="BaseResultMap" type="org.software.code.entity.SiteFare">
+        <id column="id" property="id" />
+        <result column="from_site_id" property="fromSiteId" />
+        <result column="to_site_id" property="toSiteId" />
+        <result column="city_code" property="cityCode" />
+        <result column="transit_type" property="transitType" />
+        <result column="base_fare" property="baseFare" />
+        <result column="distance" property="distance" />
+        <result column="station_count" property="stationCount" />
+        <result column="status" property="status" />
+        <result column="created_time" property="createdTime" />
+        <result column="updated_time" property="updatedTime" />
+    </resultMap>
+    
+    <!-- 查询站点间费用，带站点名称 -->
+    <select id="selectSiteFareWithSiteNames" resultType="java.util.Map">
+        SELECT 
+            sf.id, sf.from_site_id, sf.to_site_id, sf.city_code, sf.transit_type,
+            sf.base_fare, sf.distance, sf.station_count, sf.status,
+            fs.site_name as from_site_name, fs.line as from_site_line,
+            ts.site_name as to_site_name, ts.line as to_site_line
+        FROM 
+            site_fare sf
+        LEFT JOIN 
+            site fs ON sf.from_site_id = fs.id
+        LEFT JOIN 
+            site ts ON sf.to_site_id = ts.id
+        WHERE 
+            sf.status = 'ACTIVE'
+        <if test="cityCode != null">
+            AND sf.city_code = #{cityCode}
+        </if>
+        <if test="transitType != null">
+            AND sf.transit_type = #{transitType}
+        </if>
+        <if test="fromSiteId != null">
+            AND sf.from_site_id = #{fromSiteId}
+        </if>
+        <if test="toSiteId != null">
+            AND sf.to_site_id = #{toSiteId}
+        </if>
+        ORDER BY 
+            sf.from_site_id, sf.to_site_id
+    </select>
+    
+</mapper> 
