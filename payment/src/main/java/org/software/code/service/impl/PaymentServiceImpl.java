@@ -8,6 +8,7 @@ import com.google.zxing.common.HybridBinarizer;
 import org.software.code.common.result.Result;
 import org.software.code.common.result.ResultEnum;
 import org.software.code.common.util.JwtUtil;
+import org.software.code.common.util.OSSUtil;
 import org.software.code.dto.PaymentConfirmDto;
 import org.software.code.dto.QRCodeParseDto;
 import org.software.code.entity.UserBalance;
@@ -23,8 +24,10 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.net.URL;
+import java.net.HttpURLConnection;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
@@ -43,33 +46,52 @@ public class PaymentServiceImpl implements PaymentService {
     
     @Autowired
     private UserBalanceMapper userBalanceMapper;
+    
+    @Autowired
+    private OSSUtil ossUtil;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public Result<QRCodeParseResultVo> parseQRCode(String authorization, QRCodeParseDto qrCodeParseDto) {
         try {
-            // 解析图片URL
+            // 检查URL参数
             if (qrCodeParseDto == null || qrCodeParseDto.getQrCode() == null || qrCodeParseDto.getQrCode().isEmpty()) {
-                return Result.instance(ResultEnum.FAILED.getCode(), "请提供二维码图片", null);
+                return Result.instance(ResultEnum.FAILED.getCode(), "请提供二维码图片URL", null);
             }
+
+            // 获取图片URL
+            String imageUrl = qrCodeParseDto.getQrCode();
+            System.out.println("处理图片URL: " + imageUrl);
 
             // 读取图片
             BufferedImage bufferedImage;
-            String qrCode = qrCodeParseDto.getQrCode();
+            try {
+                // 使用URL直接读取图片
+                URL url = new URL(imageUrl);
+                bufferedImage = ImageIO.read(url);
             
-            if (qrCode.startsWith("data:image")) {
-                // 处理Base64编码的图片
-                String base64Image = qrCode.split(",")[1];
-                byte[] imageBytes = Base64.getDecoder().decode(base64Image);
-                bufferedImage = ImageIO.read(new ByteArrayInputStream(imageBytes));
-            } else {
-                // 处理网络URL
-                bufferedImage = ImageIO.read(new URL(qrCode));
+                if (bufferedImage == null) {
+                    // 如果直接读取失败，尝试使用预签名URL
+                    // 这种情况通常出现在私有存储桶中的图片
+                    // 从URL中提取对象键
+                    String objectKey = extractObjectKeyFromUrl(imageUrl);
+                    if (objectKey != null && !objectKey.isEmpty()) {
+                        // 生成预签名URL（5分钟有效期）
+                        String presignedUrl = ossUtil.generatePresignedUrl(objectKey, 5);
+                        System.out.println("生成预签名URL: " + presignedUrl);
+                        // 使用预签名URL读取图片
+                        bufferedImage = ImageIO.read(new URL(presignedUrl));
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("读取图片失败: " + e.getMessage());
+                e.printStackTrace();
+                return Result.instance(ResultEnum.FAILED.getCode(), "无法读取图片: " + e.getMessage(), null);
             }
             
             if (bufferedImage == null) {
-                return Result.instance(ResultEnum.FAILED.getCode(), "无效的图片格式", null);
+                return Result.instance(ResultEnum.FAILED.getCode(), "无效的图片格式或无法访问的URL", null);
             }
 
             // 使用ZXing库解析二维码
@@ -134,12 +156,37 @@ public class PaymentServiceImpl implements PaymentService {
             
             return Result.success("识别成功", resultVo);
             
-        } catch (IOException e) {
-            e.printStackTrace();
-            return Result.instance(ResultEnum.FAILED.getCode(), "图片处理失败", null);
         } catch (Exception e) {
             e.printStackTrace();
-            return Result.instance(ResultEnum.FAILED.getCode(), "服务器内部错误", null);
+            return Result.instance(ResultEnum.FAILED.getCode(), "服务器内部错误: " + e.getMessage(), null);
+        }
+    }
+    
+    /**
+     * 从URL中提取对象键
+     * @param url OSS URL
+     * @return 对象键
+     */
+    private String extractObjectKeyFromUrl(String url) {
+        try {
+            // 假设URL格式为 https://bucket.endpoint/objectKey 或 https://endpoint/bucket/objectKey
+            URL parsedUrl = new URL(url);
+            String path = parsedUrl.getPath();
+            if (path.startsWith("/")) {
+                path = path.substring(1); // 去除开头的斜杠
+            }
+            
+            // 从URL路径中提取对象键，不依赖bucketName
+            // 假设对象键是路径的最后部分
+            String[] parts = path.split("/");
+            if (parts.length > 0) {
+                return path; // 返回完整路径作为对象键
+            }
+            
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
     

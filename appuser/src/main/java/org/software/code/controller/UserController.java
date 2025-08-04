@@ -15,6 +15,7 @@ import org.software.code.dto.UserProfileUpdateRequest;
 import org.software.code.dto.PasswordUpdateRequest;
 import org.software.code.vo.UserRegisterVo;
 import org.software.code.vo.UserLoginVo;
+import org.software.code.dto.ResetPasswordRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -157,5 +158,21 @@ public class UserController {
             @RequestHeader("Authorization") String token,
             @RequestBody PasswordUpdateRequest request) {
         return userService.updatePassword(token, request);
+    }
+
+    /**
+     * 忘记密码（重置密码）
+     * @param request 重置密码请求
+     * @return 重置结果
+     */
+    @Operation(summary = "忘记密码", description = "使用手机号和验证码重置密码")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "密码重置成功"),
+        @ApiResponse(responseCode = "400", description = "参数错误"),
+        @ApiResponse(responseCode = "401", description = "验证码错误或已过期")
+    })
+    @PostMapping("/password/reset")
+    public Result<?> resetPassword(@Validated @RequestBody ResetPasswordRequest request) {
+        return userService.resetPassword(request);
     }
 }

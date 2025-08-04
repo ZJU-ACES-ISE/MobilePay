@@ -30,20 +30,20 @@ public class VerifyCodeController {
     /**
      * 发送验证码
      * @param phone 手机号
-     * @param scene 场景，register-注册，login-登录
+     * @param scene 场景，register-注册，login-登录，resetPassword-重置密码
      * @return 验证码信息
      */
-    @Operation(summary = "发送验证码", description = "向指定手机号发送验证码，支持注册和登录场景")
+    @Operation(summary = "发送验证码", description = "向指定手机号发送验证码，支持注册、登录和重置密码场景")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "发送成功"),
         @ApiResponse(responseCode = "409", description = "手机号已被注册（注册场景）"),
-        @ApiResponse(responseCode = "404", description = "手机号未注册（登录场景）")
+        @ApiResponse(responseCode = "404", description = "手机号未注册（登录场景和重置密码场景）")
     })
     @GetMapping("/send")
     public Result<VerifyCodeVo> sendVerifyCode(
             @Parameter(description = "手机号", required = true) 
             @RequestParam String phone,
-            @Parameter(description = "场景，register-注册，login-登录", required = true) 
+            @Parameter(description = "场景，register-注册，login-登录，resetPassword-重置密码", required = true) 
             @RequestParam String scene) {
         return verifyCodeService.sendVerifyCode(phone, scene);
     }

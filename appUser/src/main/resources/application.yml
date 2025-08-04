@@ -1,5 +1,12 @@
 server:
   port: 8081
+aliyun:
+  oss:
+    endpoint: oss-cn-beijing.aliyuncs.com
+    accessKeyId: LTAI5tAWVeEs3w5JQQxsDJBm
+    accessKeySecret: EY8oHeFzb1GwaxHgPjMTkTRXevrZwq
+    bucketName: mobilepaymike
+    urlPrefix: https://mobilepaymike.oss-cn-beijing.aliyuncs.com
 spring:
   application:
     name: appUser

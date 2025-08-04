@@ -10,10 +10,10 @@
     <packaging>pom</packaging>
     <modules>
         <module>gateway</module>
-        <module>payment</module>
         <module>appUser</module>
         <module>admin</module>
         <module>appassets</module>
+        <module>payment</module>
     </modules>
 
     <dependencyManagement>
@@ -36,6 +36,7 @@
     </dependencyManagement>
 
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>17</java.version>
         <spring-boot.version>2.3.4.RELEASE</spring-boot.version>
         <spring-cloud.version>Hoxton.SR8</spring-cloud.version>

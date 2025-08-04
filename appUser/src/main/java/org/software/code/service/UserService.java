@@ -2,6 +2,7 @@ package org.software.code.service;
 
 import org.software.code.common.result.Result;
 import org.software.code.dto.PasswordUpdateRequest;
+import org.software.code.dto.ResetPasswordRequest;
 import org.software.code.dto.UserProfileUpdateRequest;
 import org.software.code.vo.UserRegisterVo;
 import org.software.code.vo.UserVo;
@@ -67,4 +68,19 @@ public interface UserService {
      * @return 退出结果
      */
     Result<?> logout(String token);
+    
+    /**
+     * 更新用户头像URL
+     * @param token JWT token
+     * @param avatarUrl 头像URL
+     * @return 更新结果
+     */
+    Result<?> updateAvatarUrl(String token, String avatarUrl);
+    
+    /**
+     * 忘记密码（重置密码）
+     * @param request 重置密码请求
+     * @return 重置结果
+     */
+    Result<?> resetPassword(ResetPasswordRequest request);
 } 
