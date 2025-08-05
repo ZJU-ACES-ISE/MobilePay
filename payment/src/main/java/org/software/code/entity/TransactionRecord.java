@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("transaction_record")
+@TableName("transfer_record")
 public class TransactionRecord {
 
     /**
