@@ -12,7 +12,12 @@ import org.software.code.common.util.OSSUtil;
 import org.software.code.dto.PaymentConfirmDto;
 import org.software.code.dto.QRCodeParseDto;
 import org.software.code.entity.UserBalance;
+import org.software.code.entity.TransactionRecord;
+import org.software.code.entity.ReceiptTransaction;
+import org.software.code.mapper.ReceiptTransactionMapper;
 import org.software.code.mapper.UserBalanceMapper;
+import org.software.code.mapper.TransactionRecordMapper;
+import org.software.code.mapper.UserMapper;
 import org.software.code.service.PaymentService;
 import org.software.code.vo.PaymentConfirmVo;
 import org.software.code.vo.QRCodeParseResultVo;
@@ -34,6 +39,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.software.code.entity.User;
 
 /**
  * 支付服务实现类
@@ -49,6 +55,15 @@ public class PaymentServiceImpl implements PaymentService {
     
     @Autowired
     private OSSUtil ossUtil;
+    
+    @Autowired
+    private TransactionRecordMapper transactionRecordMapper;
+    
+    @Autowired
+    private UserMapper userMapper;
+
+    @Autowired
+    private ReceiptTransactionMapper receiptTransactionMapper;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -301,12 +316,42 @@ public class PaymentServiceImpl implements PaymentService {
             userBalance.setUpdateTime(LocalDateTime.now());
             userBalanceMapper.updateById(userBalance);
             
-            // 记录交易（实际应该保存到数据库）
-            // TODO: 保存交易记录到数据库
+            // 获取用户信息
+            User user = userMapper.selectById(userId);
+            String userName = (user != null && user.getNickname() != null) ? user.getNickname() : "用户" + userId;
+            
+            // 保存交易记录到数据库
+            TransactionRecord transactionRecord = TransactionRecord.builder()
+                    .transferNumber(transactionId)
+                    .userId(userId)
+                    .userName(userName)
+                    .type(paymentConfirmDto.getType())
+                    .targetId(paymentConfirmDto.getTargetId())
+                    .targetType(paymentConfirmDto.getTargetType())
+                    .targetName(paymentConfirmDto.getTargetName())
+                    .bizCategory(paymentConfirmDto.getBizCategory())
+                    .amount(amount)
+                    .completeTime(LocalDateTime.now())
+                    .remark("支付确认")
+                    .build();
+            
+            transactionRecordMapper.insert(transactionRecord);
             
             // 生成交易完成时间
             LocalDateTime completeTime = LocalDateTime.now();
             DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+            
+            // 保存收款记录到receipt_transaction表
+            ReceiptTransaction receiptTransaction = ReceiptTransaction.builder()
+                .transactionId(transactionId)
+                .payerId(userId)
+                .receiverId(paymentConfirmDto.getTargetId())
+                .receiverName(paymentConfirmDto.getTargetName())
+                .amount(amount)
+                .timestamp(completeTime)
+                .createTime(completeTime)
+                .build();
+            receiptTransactionMapper.insert(receiptTransaction);
             
             // 构建返回结果
             PaymentConfirmVo confirmVo = PaymentConfirmVo.builder()
