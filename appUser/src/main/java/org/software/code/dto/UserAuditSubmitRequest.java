@@ -27,6 +27,13 @@ public class UserAuditSubmitRequest {
     private String idCardFrontUrl;
     
     /**
+     * 身份证号码
+     */
+    @NotBlank(message = "身份证号码不能为空")
+    @Schema(description = "身份证号码", required = true, example = "110101199003070000")
+    private String idCard;
+    
+    /**
      * 身份证背面照片URL
      */
     @NotBlank(message = "身份证背面照片不能为空")

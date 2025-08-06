@@ -44,6 +44,12 @@ public class UserAudit {
     private String idCardBack;
     
     /**
+     * 身份证号码
+     */
+    @TableField("id_card")
+    private String idCard;
+    
+    /**
      * 审核状态：pending-待审核, approved-已通过, rejected-已拒绝
      */
     @TableField("status")

@@ -70,12 +70,15 @@ public class UserAvatarController {
             // 上传到OSS
             String avatarUrl = ossUtil.uploadBytes(avatarFile.getBytes(), fileName);
             
-            // 更新用户头像URL
+            // 生成带访问密钥的URL（有效期为365天）
+            String signedAvatarUrl = ossUtil.getUrlWithAccessKey(avatarUrl, 365 * 24 * 60);
+            
+            // 更新用户头像URL（存储原始URL）
             userService.updateAvatarUrl(token, avatarUrl);
             
-            // 返回结果
+            // 返回结果（返回带访问密钥的URL）
             AvatarUploadResponseVo responseDto = new AvatarUploadResponseVo();
-            responseDto.setAvatarUrl(avatarUrl);
+            responseDto.setAvatarUrl(signedAvatarUrl);
             
             return Result.success("头像上传成功", responseDto);
             

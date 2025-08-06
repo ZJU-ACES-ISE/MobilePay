@@ -221,4 +221,49 @@ public class OSSUtil {
             }
         }
     }
-} 
+    
+    /**
+     * 生成带访问密钥的URL（用于私有bucket的文件访问）
+     * @param objectKey 对象键（文件路径）
+     * @param expireMinutes 过期时间（分钟）
+     * @return 带访问密钥的URL
+     */
+    public String generateUrlWithAccessKey(String objectKey, int expireMinutes) {
+        // 如果URL前缀已经包含访问密钥，直接返回
+        if (urlPrefix != null && (urlPrefix.contains("?Expires=") || urlPrefix.contains("&Signature=") || urlPrefix.contains("OSSAccessKeyId="))) {
+            return urlPrefix.endsWith("/") ? urlPrefix + objectKey : urlPrefix + "/" + objectKey;
+        }
+        
+        // 否则生成预签名URL
+        return generatePresignedUrl(objectKey, expireMinutes);
+    }
+    
+    /**
+     * 获取带访问密钥的URL（用于私有bucket的文件访问）
+     * @param url 原始URL
+     * @param expireMinutes 过期时间（分钟）
+     * @return 带访问密钥的URL
+     */
+    public String getUrlWithAccessKey(String url, int expireMinutes) {
+        if (url == null || url.isEmpty()) {
+            return url;
+        }
+        
+        // 如果URL已经包含访问密钥，直接返回
+        if (url.contains("?Expires=") || url.contains("&Signature=") || url.contains("OSSAccessKeyId=")) {
+            return url;
+        }
+        
+        // 从URL中提取objectKey
+        String objectKey = url;
+        if (url.startsWith(urlPrefix)) {
+            objectKey = url.substring(urlPrefix.length());
+            if (objectKey.startsWith("/")) {
+                objectKey = objectKey.substring(1);
+            }
+        }
+        
+        // 生成带访问密钥的URL
+        return generateUrlWithAccessKey(objectKey, expireMinutes);
+    }
+}

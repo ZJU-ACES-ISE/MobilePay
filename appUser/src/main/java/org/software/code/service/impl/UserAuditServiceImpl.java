@@ -50,32 +50,23 @@ public class UserAuditServiceImpl implements UserAuditService {
             UserAudit userAudit;
             if (existingAudit != null) {
                 // 如果已经通过审核，不允许再次提交
-                if ("approved".equals(existingAudit.getStatus())) {
-                    return Result.failed("您的资料已通过审核，无需重新提交");
-                }
-                
-                // 更新现有记录
                 userAudit = existingAudit;
                 userAudit.setRealName(request.getRealName());
                 userAudit.setIdCardFront(request.getIdCardFrontUrl());
                 userAudit.setIdCardBack(request.getIdCardBackUrl());
-                userAudit.setStatus("pending"); // 重置为待审核状态
-                userAudit.setRejectReason(""); // 清空拒绝原因
+                userAudit.setIdCard(request.getIdCard());
                 userAudit.setSubmitTime(LocalDateTime.now());
-                userAudit.setAuditTime(null); // 清空审核时间
-                
                 userAuditMapper.updateById(userAudit);
             } else {
-                // 创建新记录
+                // 创建新的审核记录
                 userAudit = new UserAudit();
                 userAudit.setUserId(userId);
                 userAudit.setRealName(request.getRealName());
                 userAudit.setIdCardFront(request.getIdCardFrontUrl());
                 userAudit.setIdCardBack(request.getIdCardBackUrl());
-                userAudit.setStatus("pending"); // 默认待审核
-                userAudit.setRejectReason("");
+                userAudit.setIdCard(request.getIdCard());
+                userAudit.setStatus("pending");
                 userAudit.setSubmitTime(LocalDateTime.now());
-                
                 userAuditMapper.insert(userAudit);
             }
             

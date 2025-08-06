@@ -2,6 +2,7 @@ package org.software.code.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.software.code.common.result.Result;
+import org.software.code.common.util.OSSUtil;
 import org.software.code.dto.PasswordUpdateRequest;
 import org.software.code.dto.UserProfileUpdateRequest;
 import org.software.code.entity.User;
@@ -40,6 +41,9 @@ public class UserServiceImpl implements UserService {
     
     @Autowired
     private RedisUtil redisUtil;
+
+    @Autowired
+    private OSSUtil ossUtil;
     
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     
@@ -61,13 +65,22 @@ public class UserServiceImpl implements UserService {
             if (user == null) {
                 return Result.failed("用户不存在", UserVo.class);
             }
-            
+
+
+            // 转换头像URL为带访问密钥的URL（有效期为7天）
+            String avatarUrl = user.getAvatarUrl();
+            if (avatarUrl != null && !avatarUrl.isEmpty()) {
+                avatarUrl = ossUtil.getUrlWithAccessKey(avatarUrl, 7 * 24 * 60);
+            } else {
+                avatarUrl = "";
+            }
+
             // 转换为VO对象
             UserVo userVo = new UserVo();
             userVo.setUserId(String.valueOf(user.getId()));
             userVo.setPhone(user.getPhone());
             userVo.setNickName(user.getNickname() != null ? user.getNickname() : "用户");
-            userVo.setAvatarUrl(user.getAvatarUrl() != null ? user.getAvatarUrl() : "");
+            userVo.setAvatarUrl(avatarUrl);
             
             return Result.success("查询成功", userVo);
         } catch (Exception e) {
