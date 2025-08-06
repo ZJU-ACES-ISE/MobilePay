@@ -173,6 +173,32 @@ CREATE TABLE `transfer_record` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `transfer_number` (`transfer_number`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1950737585161588738 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+-- ----------------------------
+-- Table structure for site_fare
+-- ----------------------------
+DROP TABLE IF EXISTS `site_fare`;
+CREATE TABLE `site_fare`  (
+    `id` bigint NOT NULL AUTO_INCREMENT,
+    `from_site_id` bigint NOT NULL COMMENT '起始站点ID',
+    `to_site_id` bigint NOT NULL COMMENT '终点站点ID',
+    `city_code` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '城市编码',
+    `transit_type` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '交通类型（SUBWAY地铁，BUS公交）',
+    `base_fare` decimal(10, 2) NOT NULL COMMENT '基础票价',
+    `distance` double NULL DEFAULT NULL COMMENT '距离（公里）',
+    `station_count` int NULL DEFAULT NULL COMMENT '站点数量',
+    `status` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'ACTIVE' COMMENT '状态（ACTIVE正常，INACTIVE停用）',
+    `created_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE INDEX `uk_from_to_site`(`from_site_id` ASC, `to_site_id` ASC, `transit_type` ASC) USING BTREE,
+    INDEX `idx_from_site_id`(`from_site_id` ASC) USING BTREE,
+    INDEX `idx_to_site_id`(`to_site_id` ASC) USING BTREE,
+    INDEX `idx_city_code`(`city_code` ASC) USING BTREE,
+    CONSTRAINT `site_fare_ibfk_1` FOREIGN KEY (`from_site_id`) REFERENCES `site` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+    CONSTRAINT `site_fare_ibfk_2` FOREIGN KEY (`to_site_id`) REFERENCES `site` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- ----------------------------
 -- Table structure for transit_record
@@ -210,6 +236,65 @@ CREATE TABLE `transit_record` (
   CONSTRAINT `transit_record_ibfk_4` FOREIGN KEY (`entry_device_id`) REFERENCES `turnstile_device` (`id`) ON DELETE SET NULL,
   CONSTRAINT `transit_record_ibfk_5` FOREIGN KEY (`exit_device_id`) REFERENCES `turnstile_device` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+-- ----------------------------
+-- Table structure for transit_pass
+-- ----------------------------
+DROP TABLE IF EXISTS `transit_pass`;
+CREATE TABLE `transit_pass`  (
+ `id` bigint NOT NULL AUTO_INCREMENT,
+ `user_id` bigint NOT NULL COMMENT '用户ID',
+ `city_id` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '城市ID',
+ `city_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '城市名称',
+ `code_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '通行码链接',
+ `status` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'ACTIVE' COMMENT '状态（ACTIVE正常，INACTIVE停用）',
+ `created_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+ `updated_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+ PRIMARY KEY (`id`) USING BTREE,
+ UNIQUE INDEX `uk_user_city`(`user_id` ASC, `city_id` ASC) USING BTREE,
+ INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
+ INDEX `idx_city_id`(`city_id` ASC) USING BTREE,
+ CONSTRAINT `transit_pass_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+
+SET FOREIGN_KEY_CHECKS = 1;
+-- ----------------------------
+-- Table structure for transit_record
+-- ----------------------------
+DROP TABLE IF EXISTS `transit_record`;
+CREATE TABLE `transit_record`  (
+   `id` bigint NOT NULL AUTO_INCREMENT,
+   `user_id` bigint NOT NULL COMMENT '用户ID',
+   `mode` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '出行方式(如地铁/公交)',
+   `entry_site_id` bigint NOT NULL COMMENT '入站站点ID',
+   `exit_site_id` bigint NULL DEFAULT NULL COMMENT '出站站点ID',
+   `entry_device_id` bigint NULL DEFAULT NULL COMMENT '入站设备ID',
+   `exit_device_id` bigint NULL DEFAULT NULL COMMENT '出站设备ID',
+   `entry_time` timestamp NOT NULL COMMENT '入站时间',
+   `exit_time` timestamp NULL DEFAULT NULL COMMENT '出站时间',
+   `amount` decimal(10, 2) NULL DEFAULT NULL COMMENT '费用',
+   `discount_amount` decimal(10, 2) NULL DEFAULT 0.00 COMMENT '折扣金额',
+   `actual_amount` decimal(10, 2) NULL DEFAULT NULL COMMENT '实际扣费金额',
+   `status` int NOT NULL COMMENT '出站状态（0正常，1支付异常，2出行异常）',
+   `reason` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '异常原因（status为1或2时记录）',
+   `transaction_id` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '交易记录编号（正常出站时记录）',
+   `created_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+   `updated_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+   PRIMARY KEY (`id`) USING BTREE,
+   INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
+   INDEX `idx_entry_site_id`(`entry_site_id` ASC) USING BTREE,
+   INDEX `idx_exit_site_id`(`exit_site_id` ASC) USING BTREE,
+   INDEX `idx_entry_time`(`entry_time` ASC) USING BTREE,
+   INDEX `idx_status`(`status` ASC) USING BTREE,
+   INDEX `entry_device_id`(`entry_device_id` ASC) USING BTREE,
+   INDEX `exit_device_id`(`exit_device_id` ASC) USING BTREE,
+   CONSTRAINT `transit_record_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+   CONSTRAINT `transit_record_ibfk_2` FOREIGN KEY (`entry_site_id`) REFERENCES `site` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+   CONSTRAINT `transit_record_ibfk_3` FOREIGN KEY (`exit_site_id`) REFERENCES `site` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+   CONSTRAINT `transit_record_ibfk_4` FOREIGN KEY (`entry_device_id`) REFERENCES `turnstile_device` (`id`) ON DELETE SET NULL ON UPDATE RESTRICT,
+   CONSTRAINT `transit_record_ibfk_5` FOREIGN KEY (`exit_device_id`) REFERENCES `turnstile_device` (`id`) ON DELETE SET NULL ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 15 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- ----------------------------
 -- Table structure for transit_repay
