@@ -12,8 +12,8 @@
         <module>gateway</module>
         <module>appUser</module>
         <module>admin</module>
-        <module>appassets</module>
-        <module>payment</module>
+        <module>appAssets</module>
+        <module>appPayment</module>
     </modules>
 
     <dependencyManagement>
