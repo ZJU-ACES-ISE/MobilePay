@@ -262,9 +262,8 @@ chore: 构建过程或辅助工具的变动
 
 ## 📞 联系方式
 
-- 项目维护者: [Your Name]
-- 邮箱: [your.email@example.com]
-- 项目地址: [https://github.com/your-username/mobilepay]
+- 邮箱: [22451156@zju.edu.cn]
+- 项目地址: [https://github.com/ZJU-ACES-ISE/MobilePay]
 
 ## 🙏 致谢
 
