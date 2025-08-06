@@ -29,7 +29,7 @@ public class AiController {
             AskAiResponseVo responseVo = aiService.askAi(requestDto);
             return Result.success(responseVo);
         } catch (Exception e) {
-            return Result.failed("AI分析失败: " + e.getMessage(),AskAiResponseVo.class);
+            return Result.instance(ResultEnum.FAILED.getCode(),"AI分析失败: " + e.getMessage(),null);
         }
     }
     
