@@ -29,8 +29,7 @@ import java.util.stream.Collectors;
 @Service
 public class TransitPassServiceImpl implements TransitPassService {
 
-    @Autowired
-    private JwtUtil jwtUtil;
+
     
     @Autowired
     private TransitPassMapper transitPassMapper;
@@ -46,7 +45,7 @@ public class TransitPassServiceImpl implements TransitPassService {
         try {
             // 从token中获取用户ID
             String token = authorization.replace("Bearer ", "");
-            Long userId = jwtUtil.extractID(token);
+            Long userId = JwtUtil.extractID(token);
             
             // 查询用户的所有通行码
             LambdaQueryWrapper<TransitPass> queryWrapper = Wrappers.<TransitPass>lambdaQuery()
@@ -77,7 +76,7 @@ public class TransitPassServiceImpl implements TransitPassService {
         try {
             // 从token中获取用户ID
             String token = authorization.replace("Bearer ", "");
-            Long userId = jwtUtil.extractID(token);
+            Long userId = JwtUtil.extractID(token);
             
             // 查询用户指定城市的通行码
             LambdaQueryWrapper<TransitPass> queryWrapper = Wrappers.<TransitPass>lambdaQuery()
@@ -107,7 +106,7 @@ public class TransitPassServiceImpl implements TransitPassService {
         try {
             // 从token中获取用户ID
             String token = authorization.replace("Bearer ", "");
-            Long userId = jwtUtil.extractID(token);
+            Long userId = JwtUtil.extractID(token);
             
             // 查询用户指定城市的通行码
             LambdaQueryWrapper<TransitPass> queryWrapper = Wrappers.<TransitPass>lambdaQuery()

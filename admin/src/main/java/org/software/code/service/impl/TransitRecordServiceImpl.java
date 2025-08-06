@@ -162,7 +162,9 @@ public class TransitRecordServiceImpl extends ServiceImpl<TransitRecordMapper, T
     }
     
     private String getStatusName(Integer status) {
-        if (status == null) return null;
+        if (status == null) {
+            return null;
+        }
         switch (status) {
             case 0: return "正常";
             case 1: return "支付异常";

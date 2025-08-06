@@ -30,7 +30,9 @@ public class BillsServiceImpl implements BillsService {
     private BillsMapper billsMapper;
 
     private String getTypeName(Integer type) {
-        if (type == null) return "未知";
+        if (type == null) {
+            return "未知";
+        }
         return switch (type) {
             case 1 -> "收入";
             case 2 -> "转出";
@@ -118,13 +120,15 @@ public class BillsServiceImpl implements BillsService {
         QueryWrapper<TransferRecord> wrapper = new QueryWrapper<>();
         wrapper.eq("user_id", userId);
 
-        if(StringUtils.isNotBlank(scene))
-            if(scene.equals("bills")) //bills时添加条件
+        if(StringUtils.isNotBlank(scene)) {
+            if (scene.equals("bills")) //bills时添加条件
             {
-                if (StringUtils.isNotBlank(startTime))
+                if (StringUtils.isNotBlank(startTime)) {
                     wrapper.ge("complete_time", startTime);
-                if (StringUtils.isNotBlank(endTime))
+                }
+                if (StringUtils.isNotBlank(endTime)) {
                     wrapper.le("complete_time", endTime);
+                }
                 if (type != null) {
                     wrapper.eq("type", type);
                 }
@@ -134,11 +138,10 @@ public class BillsServiceImpl implements BillsService {
                             .or().like("transfer_number", keyString)
                     );
                 }
-            }
-            else{ //index时添加条件
+            } else { //index时添加条件
                 wrapper.last("LIMIT " + num);
             }
-
+        }
         wrapper.orderByDesc("complete_time");
 
         List<TransferRecord> records = billsMapper.selectList(wrapper);

@@ -541,7 +541,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
     
     private String getTransitStatusName(Integer status) {
-        if (status == null) return null;
+        if (status == null) {
+            return null;
+        }
         switch (status) {
             case 1: return "已进站";
             case 2: return "已出站";

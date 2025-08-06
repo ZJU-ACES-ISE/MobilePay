@@ -43,6 +43,7 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements
     @Resource
     private RedisUtil redisUtil;
 
+    @Override
     public AdminLoginVo login(AdminLoginDto loginDto, String clientIp) {
         // 1. 验证参数
         if (loginDto == null || StrUtil.isBlank(loginDto.getUsername()) || StrUtil.isBlank(loginDto.getPassword())) {
@@ -119,7 +120,7 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements
         logger.info("Admin login successful: {}, role: {}", loginDto.getUsername(), admin.getRole());
         return loginVo;
     }
-
+    @Override
     public AdminProfileVo getProfileById(Long adminId) {
         // 查询管理员信息
         Admin admin = AdminMapper.selectById(adminId);

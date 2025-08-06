@@ -38,8 +38,7 @@ import java.util.stream.Collectors;
 @Service
 public class TransitServiceImpl implements TransitService {
 
-    @Autowired
-    private JwtUtil jwtUtil;
+
     
     @Autowired
     private TransitRecordMapper transitRecordMapper;
@@ -67,7 +66,7 @@ public class TransitServiceImpl implements TransitService {
         try {
             // 从token中获取用户ID
             String token = authorization.replace("Bearer ", "");
-            Long userId = jwtUtil.extractID(token);
+            Long userId = JwtUtil.extractID(token);
             
             // 查询用户是否有未完成的出行记录
             LambdaQueryWrapper<TransitRecord> queryWrapper = Wrappers.<TransitRecord>lambdaQuery()
@@ -137,7 +136,7 @@ public class TransitServiceImpl implements TransitService {
         try {
             // 从token中获取用户ID
             String token = authorization.replace("Bearer ", "");
-            Long userId = jwtUtil.extractID(token);
+            Long userId = JwtUtil.extractID(token);
             
             // 查询用户的未完成出行记录
             LambdaQueryWrapper<TransitRecord> queryWrapper = Wrappers.<TransitRecord>lambdaQuery()
@@ -286,7 +285,7 @@ public class TransitServiceImpl implements TransitService {
         try {
             // 从token中获取用户ID
             String token = authorization.replace("Bearer ", "");
-            Long userId = jwtUtil.extractID(token);
+            Long userId = JwtUtil.extractID(token);
             
             // 默认查询10条记录
             if (limit == null || limit <= 0) {
@@ -349,7 +348,7 @@ public class TransitServiceImpl implements TransitService {
         try {
             // 从token中获取用户ID
             String token = authorization.replace("Bearer ", "");
-            Long userId = jwtUtil.extractID(token);
+            Long userId = JwtUtil.extractID(token);
             
             // 查询出行记录
             LambdaQueryWrapper<TransitRecord> queryWrapper = Wrappers.<TransitRecord>lambdaQuery()
@@ -417,7 +416,7 @@ public class TransitServiceImpl implements TransitService {
         try {
             // 从token中获取用户ID
             String token = authorization.replace("Bearer ", "");
-            Long userId = jwtUtil.extractID(token);
+            Long userId = JwtUtil.extractID(token);
             
             // 查询出行记录
             LambdaQueryWrapper<TransitRecord> queryWrapper = Wrappers.<TransitRecord>lambdaQuery()
@@ -493,7 +492,7 @@ public class TransitServiceImpl implements TransitService {
         try {
             // Validate the authorization token
             String token = authorization.replace("Bearer ", "");
-            Long userId = jwtUtil.extractID(token);
+            Long userId = JwtUtil.extractID(token);
             
             if (userId == null) {
                 return Result.instance(ResultEnum.FAILED.getCode(), "无效的Token", null);

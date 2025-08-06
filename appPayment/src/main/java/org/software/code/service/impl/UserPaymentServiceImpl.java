@@ -17,8 +17,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserPaymentServiceImpl implements UserPaymentService {
 
-    @Autowired
-    private JwtUtil jwtUtil;
+
     
     @Autowired
     private UserBalanceMapper userBalanceMapper;
@@ -28,7 +27,7 @@ public class UserPaymentServiceImpl implements UserPaymentService {
         try {
             // 从token中获取用户ID
             String token = authorization.replace("Bearer ", "");
-            Long userId = jwtUtil.extractID(token);
+            Long userId = JwtUtil.extractID(token);
             
             // 从数据库获取用户余额
             QueryWrapper<UserBalance> queryWrapper = new QueryWrapper<>();
