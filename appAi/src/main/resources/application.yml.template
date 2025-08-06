@@ -1,18 +1,17 @@
 # ======= 服务器相关配置 =======
 server:
-  port: 8084
+  port: 8081
 
 # ======= Spring 应用相关配置 =======
 spring:
   application:
-    name: mobilepay-ai
+    name: user
 
   # ======= 数据库配置 =======
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/mobilepay?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
-    username: root
-    password: 123456
+    url: jdbc:mysql://<your-database-host>:<your-database-port>/mobilepay?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: <your-database-username>
+    password: <your-database-password>
 
   # ======= Nacos 服务发现配置 =======
   cloud:
@@ -25,39 +24,10 @@ spring:
 
   # ======= Redis 缓存配置 =======
   redis:
-    host: localhost
-    port: 6379
-    password: 
-    database: 0
+    host: <your-redis-host>
+    port: <your-redis-port>
+    password: <your-redis-password>
 
   # ======= 缓存类型配置 =======
   cache:
     type: redis
-
-mybatis-plus:
-  configuration:
-    map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-  mapper-locations: classpath:mapper/*.xml
-  global-config:
-    db-config:
-      id-type: auto
-      logic-delete-field: deleted
-      logic-delete-value: 1
-      logic-not-delete-value: 0
-
-# AI配置
-ai:
-  openai:
-    api-key: your-openai-api-key
-    model: gpt-3.5-turbo
-    max-tokens: 1000
-  deepseek:
-    api-key: your-deepseek-api-key
-    model: deepseek-chat
-    max-tokens: 1000
-
-# 日志配置
-logging:
-  level:
-    org.software.code.ai: debug
