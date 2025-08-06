@@ -191,7 +191,9 @@ public class AssetsServiceImpl implements AssetsService {
                 BigDecimal expense = billsMapper.sumAmountByUserIdAndTypeAndTime(userId, 2, start, end);// type 2: 转出
 
                 BigDecimal nextBalance = dailyBalanceMap.get(nextDay);
-                if (nextBalance == null) nextBalance = BigDecimal.ZERO;
+                if (nextBalance == null){
+                    nextBalance = BigDecimal.ZERO;
+                }
 
                 dayBalance = nextBalance.subtract(income).add(expense);
 

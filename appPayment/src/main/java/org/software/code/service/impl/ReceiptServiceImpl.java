@@ -47,8 +47,7 @@ public class ReceiptServiceImpl implements ReceiptService {
     @Autowired
     private QRCodeUtil qrCodeUtil;
 
-    @Autowired
-    private JwtUtil jwtUtil;
+
 
     @Autowired(required = false)
     private UserMapper userMapper;
@@ -65,7 +64,7 @@ public class ReceiptServiceImpl implements ReceiptService {
         try {
             // 从token中获取用户ID
             String token = authorization.replace("Bearer ", "");
-            Long userId = jwtUtil.extractID(token);
+            Long userId = JwtUtil.extractID(token);
             // 生成收款码ID
             String receiptCodeId = generateReceiptCodeId();
             
@@ -138,7 +137,7 @@ public class ReceiptServiceImpl implements ReceiptService {
     public Result<SetAmountVo> setReceiptAmount(String authorization, SetAmountDto setAmountDto) {
         try {
             String token = authorization.replace("Bearer ", "");
-            Long userId = jwtUtil.extractID(token);
+            Long userId = JwtUtil.extractID(token);
 
             QueryWrapper<ReceiptCode> queryWrapper = new QueryWrapper<>();
             queryWrapper.eq("receipt_code_id", setAmountDto.getReceiptCodeId());
@@ -204,7 +203,7 @@ public class ReceiptServiceImpl implements ReceiptService {
         try {
             // 从token中获取用户ID
             String token = authorization.replace("Bearer ", "");
-            Long userId = jwtUtil.extractID(token);
+            Long userId = JwtUtil.extractID(token);
             
             // 查询交易记录是否存在
             QueryWrapper<ReceiptTransaction> transactionQueryWrapper = new QueryWrapper<>();
@@ -268,7 +267,7 @@ public class ReceiptServiceImpl implements ReceiptService {
         try {
             // 从token中获取用户ID
             String token = authorization.replace("Bearer ", "");
-            Long userId = jwtUtil.extractID(token);
+            Long userId = JwtUtil.extractID(token);
             
             // 查询该用户的所有收款记录
             QueryWrapper<ReceiptTransaction> queryWrapper = new QueryWrapper<>();
@@ -311,7 +310,7 @@ public class ReceiptServiceImpl implements ReceiptService {
         try {
             // 从token中获取用户ID
             String token = authorization.replace("Bearer ", "");
-            Long userId = jwtUtil.extractID(token);
+            Long userId = JwtUtil.extractID(token);
             
             // 设置默认限制为3条记录
             if (limit == null || limit <= 0) {

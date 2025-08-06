@@ -47,8 +47,7 @@ import org.software.code.entity.User;
 @Service
 public class PaymentServiceImpl implements PaymentService {
 
-    @Autowired
-    private JwtUtil jwtUtil;
+
     
     @Autowired
     private UserBalanceMapper userBalanceMapper;
@@ -266,7 +265,7 @@ public class PaymentServiceImpl implements PaymentService {
         try {
             // 从token中获取用户ID
             String token = authorization.replace("Bearer ", "");
-            Long userId = jwtUtil.extractID(token);
+            Long userId = JwtUtil.extractID(token);
             
             // 验证交易类型
             if (paymentConfirmDto.getType() == 2 && paymentConfirmDto.getBizCategory() == null) {

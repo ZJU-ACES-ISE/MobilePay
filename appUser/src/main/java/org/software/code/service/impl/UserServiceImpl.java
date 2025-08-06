@@ -390,7 +390,7 @@ public class UserServiceImpl implements UserService {
             
             // 校验验证码
             Result<?> verifyResult = verifyCodeService.checkVerifyCode(request.getPhone(), request.getVerifyCode(), "resetPassword");
-            if (verifyResult.getCode() != ResultEnum.SUCCESS.getCode()) {
+            if (verifyResult.getCode().equals(ResultEnum.SUCCESS.getCode())) {
                 return verifyResult;
             }
             

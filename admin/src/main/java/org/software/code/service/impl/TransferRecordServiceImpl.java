@@ -107,7 +107,9 @@ public class TransferRecordServiceImpl extends ServiceImpl<TransferRecordMapper,
     }
     
     private String getTypeName(Integer type) {
-        if (type == null) return null;
+        if (type == null) {
+            return null;
+        };
         switch (type) {
             case 1: return "转入";
             case 2: return "转出";
@@ -116,7 +118,9 @@ public class TransferRecordServiceImpl extends ServiceImpl<TransferRecordMapper,
     }
     
     private String getTargetTypeName(Integer targetType) {
-        if (targetType == null) return null;
+        if (targetType == null) {
+            return null;
+        }
         switch (targetType) {
             case 1: return "用户";
             case 2: return "商户";
@@ -126,7 +130,9 @@ public class TransferRecordServiceImpl extends ServiceImpl<TransferRecordMapper,
     }
     
     private String getBizCategoryName(Integer bizCategory) {
-        if (bizCategory == null) return null;
+        if (bizCategory == null) {
+            return null;
+        }
         switch (bizCategory) {
             case 1: return "餐饮";
             case 2: return "出行";
