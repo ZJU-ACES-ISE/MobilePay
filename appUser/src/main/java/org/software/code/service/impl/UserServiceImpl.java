@@ -2,6 +2,7 @@ package org.software.code.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.software.code.common.result.Result;
+import org.software.code.common.util.OSSUtil;
 import org.software.code.dto.PasswordUpdateRequest;
 import org.software.code.dto.UserProfileUpdateRequest;
 import org.software.code.entity.User;
@@ -22,9 +23,16 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.util.Date;
 import io.jsonwebtoken.Claims;
+import org.software.code.dto.ResetPasswordRequest;
+import org.software.code.common.result.ResultEnum;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class UserServiceImpl implements UserService {
+    private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
+
     @Autowired
     private UserMapper userMapper;
     
@@ -33,6 +41,9 @@ public class UserServiceImpl implements UserService {
     
     @Autowired
     private RedisUtil redisUtil;
+
+    @Autowired
+    private OSSUtil ossUtil;
     
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     
@@ -54,13 +65,22 @@ public class UserServiceImpl implements UserService {
             if (user == null) {
                 return Result.failed("用户不存在", UserVo.class);
             }
-            
+
+
+            // 转换头像URL为带访问密钥的URL（有效期为7天）
+            String avatarUrl = user.getAvatarUrl();
+            if (avatarUrl != null && !avatarUrl.isEmpty()) {
+                avatarUrl = ossUtil.getUrlWithAccessKey(avatarUrl, 7 * 24 * 60);
+            } else {
+                avatarUrl = "";
+            }
+
             // 转换为VO对象
             UserVo userVo = new UserVo();
             userVo.setUserId(String.valueOf(user.getId()));
             userVo.setPhone(user.getPhone());
             userVo.setNickName(user.getNickname() != null ? user.getNickname() : "用户");
-            userVo.setAvatarUrl(user.getAvatarUrl() != null ? user.getAvatarUrl() : "");
+            userVo.setAvatarUrl(avatarUrl);
             
             return Result.success("查询成功", userVo);
         } catch (Exception e) {
@@ -317,6 +337,81 @@ public class UserServiceImpl implements UserService {
             return Result.success("退出成功");
         } catch (Exception e) {
             return Result.failed("无效的登录状态");
+        }
+    }
+
+    /**
+     * 更新用户头像URL
+     * @param token JWT token
+     * @param avatarUrl 头像URL
+     * @return 更新结果
+     */
+    @Override
+    public Result<?> updateAvatarUrl(String token, String avatarUrl) {
+        try {
+            // 从token中解析用户ID
+            Long userId = JwtUtil.extractID(token);
+            if (userId == null) {
+                return Result.failed("无效的Token");
+            }
+            
+            // 查询用户是否存在
+            User user = userMapper.selectById(userId);
+            if (user == null) {
+                return Result.failed("用户不存在");
+            }
+            
+            // 更新头像URL
+            user.setAvatarUrl(avatarUrl);
+            user.setUpdateTime(LocalDateTime.now());
+            userMapper.updateById(user);
+            
+            return Result.success("头像更新成功");
+        } catch (Exception e) {
+            log.error("更新头像失败", e);
+            return Result.failed("更新头像失败: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 忘记密码（重置密码）
+     * @param request 重置密码请求
+     * @return 重置结果
+     */
+    @Override
+    public Result<?> resetPassword(ResetPasswordRequest request) {
+        try {
+            // 参数校验
+            if (request == null || request.getPhone() == null || request.getPhone().isEmpty()
+                    || request.getVerifyCode() == null || request.getVerifyCode().isEmpty()
+                    || request.getNewPassword() == null || request.getNewPassword().isEmpty()) {
+                return Result.failed("参数不完整");
+            }
+            
+            // 校验验证码
+            Result<?> verifyResult = verifyCodeService.checkVerifyCode(request.getPhone(), request.getVerifyCode(), "resetPassword");
+            if (verifyResult.getCode() != ResultEnum.SUCCESS.getCode()) {
+                return verifyResult;
+            }
+            
+            // 查询用户是否存在
+            QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("phone", request.getPhone());
+            User user = userMapper.selectOne(queryWrapper);
+            
+            if (user == null) {
+                return Result.failed("用户不存在");
+            }
+            
+            // 更新密码
+            user.setLoginPassword(passwordEncoder.encode(request.getNewPassword()));
+            user.setUpdateTime(LocalDateTime.now());
+            userMapper.updateById(user);
+            
+            return Result.success("密码重置成功");
+        } catch (Exception e) {
+            log.error("重置密码失败", e);
+            return Result.failed("重置密码失败: " + e.getMessage());
         }
     }
 } 
