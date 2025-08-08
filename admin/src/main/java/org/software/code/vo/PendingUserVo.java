@@ -1,6 +1,5 @@
 package org.software.code.vo;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -32,43 +31,36 @@ public class PendingUserVo {
     /**
      * 用户ID
      */
-    @JsonProperty("user_id")
     private Long userId;
 
     /**
      * 手机号
      */
-    @JsonProperty("phone")
     private String phone;
 
     /**
      * 昵称
      */
-    @JsonProperty("nickname")
     private String nickname;
 
     /**
      * 头像URL
      */
-    @JsonProperty("avatar_url")
     private String avatarUrl;
 
     /**
      * 用户状态
      */
-    @JsonProperty("status")
     private String status;
 
     /**
      * 用户注册时间
      */
-    @JsonProperty("create_time")
     private LocalDateTime createTime;
 
     /**
      * 用户信息更新时间
      */
-    @JsonProperty("update_time")
     private LocalDateTime updateTime;
 
     // ========== 身份验证信息 (来自user_verification表) ==========
@@ -76,55 +68,46 @@ public class PendingUserVo {
     /**
      * 身份验证记录ID
      */
-    @JsonProperty("verification_id")
     private Long verificationId;
 
     /**
      * 真实姓名
      */
-    @JsonProperty("real_name")
     private String realName;
 
     /**
      * 身份证号
      */
-    @JsonProperty("id_card")
     private String idCard;
 
     /**
      * 身份证正面照片URL
      */
-    @JsonProperty("id_card_front")
     private String idCardFront;
 
     /**
      * 身份证背面照片URL
      */
-    @JsonProperty("id_card_back")
     private String idCardBack;
 
     /**
      * 身份验证状态
      */
-    @JsonProperty("verification_status")
     private String verificationStatus;
 
     /**
      * 拒绝原因（审核拒绝时填写）
      */
-    @JsonProperty("reject_reason")
     private String rejectReason;
 
     /**
      * 身份验证提交时间
      */
-    @JsonProperty("submit_time")
     private LocalDateTime submitTime;
 
     /**
      * 审核时间
      */
-    @JsonProperty("audit_time")
     private LocalDateTime auditTime;
 
 }

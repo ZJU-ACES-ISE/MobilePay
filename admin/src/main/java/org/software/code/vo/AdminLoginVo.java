@@ -1,6 +1,5 @@
 package org.software.code.vo;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,37 +20,31 @@ public class AdminLoginVo {
     /**
      * 访问token
      */
-    @JsonProperty("access_token")
     private String accessToken;
 
     /**
      * 刷新token
      */
-    @JsonProperty("refresh_token")
     private String refreshToken;
 
     /**
      * token类型
      */
-    @JsonProperty("token_type")
     private String tokenType = "Bearer";
 
     /**
      * 访问token过期时间（秒）
      */
-    @JsonProperty("expires_in")
     private Long expiresIn;
 
     /**
      * 刷新token过期时间（秒）
      */
-    @JsonProperty("refresh_expires_in")
     private Long refreshExpiresIn;
 
     /**
      * 管理员信息
      */
-    @JsonProperty("admin_info")
     private AdminInfo adminInfo;
 
     @Data
@@ -62,29 +55,24 @@ public class AdminLoginVo {
         /**
          * 管理员ID
          */
-        @JsonProperty("admin_id")
         private Long adminId;
 
         /**
          * 用户名
          */
-        @JsonProperty("username")
         private String username;
         /**
          * 角色
          */
-        @JsonProperty("role")
         private String role;
         /**
          * 最后登录时间
          */
-        @JsonProperty("last_login_time")
         private LocalDateTime lastLoginTime;
 
         /**
          * 最后登录IP
          */
-        @JsonProperty("last_login_ip")
         private String lastLoginIp;
     }
 }
