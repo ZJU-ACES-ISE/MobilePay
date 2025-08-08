@@ -39,15 +39,6 @@ public class SiteDetailVo {
      */
     private String siteAddress;
 
-    /**
-     * 联系人
-     */
-    private String contactPerson;
-
-    /**
-     * 联系电话
-     */
-    private String contactPhone;
 
     /**
      * 站点状态
@@ -59,15 +50,6 @@ public class SiteDetailVo {
      */
     private String statusName;
 
-    /**
-     * 站点类型
-     */
-    private String siteType;
-
-    /**
-     * 站点类型名称
-     */
-    private String siteTypeName;
 
     /**
      * 交通类型
@@ -78,11 +60,6 @@ public class SiteDetailVo {
      * 交通类型名称
      */
     private String typeName;
-
-    /**
-     * 站点描述
-     */
-    private String description;
 
     /**
      * 城市
@@ -150,6 +127,11 @@ public class SiteDetailVo {
     private List<DeviceSimpleVo> devices;
 
     /**
+     * 客流量统计信息
+     */
+    private PassengerFlowStats passengerFlowStats;
+
+    /**
      * 设备简单视图对象
      */
     @Data
@@ -200,6 +182,35 @@ public class SiteDetailVo {
     }
 
     /**
+     * 客流量统计信息
+     */
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class PassengerFlowStats {
+        /**
+         * 今日进站人数
+         */
+        private Long todayEntryCount;
+
+        /**
+         * 今日出站人数
+         */
+        private Long todayExitCount;
+
+        /**
+         * 今日总客流量
+         */
+        private Long todayTotalFlow;
+
+        /**
+         * 日均客流量（当前月份）
+         */
+        private Double averageDailyFlow;
+    }
+
+    /**
      * 获取状态名称
      */
     public String getStatusName() {
@@ -213,17 +224,6 @@ public class SiteDetailVo {
         return "未知状态";
     }
 
-    /**
-     * 获取站点类型名称
-     */
-    public String getSiteTypeName() {
-        if ("MAIN".equals(this.siteType)) {
-            return "主站点";
-        } else if ("BRANCH".equals(this.siteType)) {
-            return "分站点";
-        }
-        return "未知类型";
-    }
 
     /**
      * 获取交通类型名称
