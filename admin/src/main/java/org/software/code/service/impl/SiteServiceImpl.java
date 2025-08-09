@@ -11,7 +11,11 @@ import org.software.code.dto.SiteCreateDto;
 import org.software.code.dto.SiteSearchDto;
 import org.software.code.dto.SiteUpdateDto;
 import org.software.code.entity.Site;
+import org.software.code.entity.TurnstileDevice;
+import org.software.code.entity.TransitRecord;
 import org.software.code.mapper.SiteMapper;
+import org.software.code.mapper.TurnstileDeviceMapper;
+import org.software.code.mapper.TransitRecordMapper;
 import org.software.code.service.SiteService;
 import org.software.code.vo.SiteDetailVo;
 import org.software.code.vo.SiteListVo;
@@ -23,7 +27,6 @@ import org.springframework.util.StringUtils;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,6 +43,12 @@ public class SiteServiceImpl extends ServiceImpl<SiteMapper, Site> implements Si
 
     @Resource
     private SiteMapper siteMapper;
+
+    @Resource
+    private TurnstileDeviceMapper turnstileDeviceMapper;
+
+    @Resource
+    private TransitRecordMapper transitRecordMapper;
 
     @Override
     public Page<SiteListVo> getSitePage(Integer pageNum, Integer pageSize, SiteSearchDto searchDto) {
@@ -122,9 +131,15 @@ public class SiteServiceImpl extends ServiceImpl<SiteMapper, Site> implements Si
 
         SiteDetailVo siteDetailVo = convertToSiteDetailVo(site);
 
-        // TODO: 查询关联的设备信息
-        // List<Device> devices = deviceMapper.selectBySiteId(siteId);
-        // siteDetailVo.setDevices(convertToDeviceSimpleVos(devices));
+        // 查询关联的设备信息
+        List<TurnstileDevice> devices = turnstileDeviceMapper.selectList(
+            Wrappers.<TurnstileDevice>lambdaQuery().eq(TurnstileDevice::getSiteId, siteId)
+        );
+        siteDetailVo.setDevices(convertToDeviceSimpleVos(devices));
+
+        // 查询客流量统计信息
+        SiteDetailVo.PassengerFlowStats flowStats = calculatePassengerFlowStats(siteId);
+        siteDetailVo.setPassengerFlowStats(flowStats);
 
         return siteDetailVo;
     }
@@ -422,9 +437,7 @@ public class SiteServiceImpl extends ServiceImpl<SiteMapper, Site> implements Si
                 .lineName(site.getLineName())
                 .longitude(site.getLongitude())
                 .latitude(site.getLatitude())
-                .businessStartTime(null) // Not available in Site entity
-                .businessEndTime(null) // Not available in Site entity
-                .createdTime(site.getCreatedTime() != null ? 
+                .createdTime(site.getCreatedTime() != null ?
                     LocalDateTime.now() : null)
                 .updatedTime(site.getUpdatedTime() != null ? 
                     LocalDateTime.now() : null)
@@ -437,27 +450,104 @@ public class SiteServiceImpl extends ServiceImpl<SiteMapper, Site> implements Si
                 .siteName(site.getSiteName())
                 .siteCode(site.getSiteCode())
                 .siteAddress(site.getAddress())
-                .contactPerson(null) // Not available in Site entity
-                .contactPhone(null) // Not available in Site entity
                 .status(site.getStatus())
-                .siteType(null) // Not available in Site entity
                 .type(site.getType())
-                .description(null) // Not available in Site entity
                 .city(site.getCity())
                 .lineName(site.getLineName())
                 .longitude(site.getLongitude())
                 .latitude(site.getLatitude())
-                .businessStartTime(null) // Not available in Site entity
-                .businessEndTime(null) // Not available in Site entity
-                .createdTime(site.getCreatedTime() != null ? 
+                .createdTime(site.getCreatedTime() != null ?
                     LocalDateTime.now() : null)
                 .updatedTime(site.getUpdatedTime() != null ? 
                     LocalDateTime.now() : null)
-                .createdBy(null) // Not available in Site entity
-                .updatedBy(null) // Not available in Site entity
-                .createdByName(null) // Not available in Site entity
-                .updatedByName(null) // Not available in Site entity
                 .devices(new ArrayList<>())
+                .passengerFlowStats(null) // Will be set in getSiteDetail method
                 .build();
+    }
+
+    /**
+     * 转换设备列表为设备简单视图对象列表
+     */
+    private List<SiteDetailVo.DeviceSimpleVo> convertToDeviceSimpleVos(List<TurnstileDevice> devices) {
+        if (devices == null || devices.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return devices.stream()
+                .map(this::convertToDeviceSimpleVo)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 转换单个设备为设备简单视图对象
+     */
+    private SiteDetailVo.DeviceSimpleVo convertToDeviceSimpleVo(TurnstileDevice device) {
+        return SiteDetailVo.DeviceSimpleVo.builder()
+                .deviceId(device.getId())
+                .deviceCode(device.getDeviceCode())
+                .deviceName(device.getDeviceName())
+                .status(device.getStatus())
+                .build();
+    }
+
+    /**
+     * 计算站点客流量统计信息
+     */
+    private SiteDetailVo.PassengerFlowStats calculatePassengerFlowStats(Long siteId) {
+        try {
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime startOfToday = now.toLocalDate().atStartOfDay();
+            LocalDateTime startOfMonth = now.withDayOfMonth(1).toLocalDate().atStartOfDay();
+
+            // 查询今日进站人数
+            Long todayEntryCount = transitRecordMapper.selectCount(
+                Wrappers.<TransitRecord>lambdaQuery()
+                    .eq(TransitRecord::getEntrySiteId, siteId)
+                    .ge(TransitRecord::getEntryTime, startOfToday)
+                    .lt(TransitRecord::getEntryTime, now)
+            );
+
+            // 查询今日出站人数
+            Long todayExitCount = transitRecordMapper.selectCount(
+                Wrappers.<TransitRecord>lambdaQuery()
+                    .eq(TransitRecord::getExitSiteId, siteId)
+                    .ge(TransitRecord::getExitTime, startOfToday)
+                    .lt(TransitRecord::getExitTime, now)
+            );
+
+            // 计算当前月份日均客流量
+            Long monthlyTotalFlow = transitRecordMapper.selectCount(
+                Wrappers.<TransitRecord>lambdaQuery()
+                    .and(wrapper -> wrapper
+                        .eq(TransitRecord::getEntrySiteId, siteId)
+                        .or()
+                        .eq(TransitRecord::getExitSiteId, siteId)
+                    )
+                    .ge(TransitRecord::getCreatedTime, startOfMonth)
+                    .lt(TransitRecord::getCreatedTime, now)
+            );
+
+            // 计算当前月份已经过的天数
+            int daysInMonth = now.getDayOfMonth();
+            Double averageDailyFlow = daysInMonth > 0 ? monthlyTotalFlow.doubleValue() / daysInMonth : 0.0;
+
+            // 构建统计结果
+            return SiteDetailVo.PassengerFlowStats.builder()
+                    .todayEntryCount(todayEntryCount)
+                    .todayExitCount(todayExitCount)
+                    .todayTotalFlow(todayEntryCount + todayExitCount)
+                    .averageDailyFlow(averageDailyFlow)
+                    .build();
+
+        } catch (Exception e) {
+            logger.error("计算站点客流量统计失败，站点ID：{}，错误：{}", siteId, e.getMessage(), e);
+            // 返回空统计数据
+            return SiteDetailVo.PassengerFlowStats.builder()
+                    .todayEntryCount(0L)
+                    .todayExitCount(0L)
+                    .todayTotalFlow(0L)
+                    .averageDailyFlow(0.0)
+                    .build();
+        }
     }
 }

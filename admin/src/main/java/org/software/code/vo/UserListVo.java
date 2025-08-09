@@ -1,6 +1,5 @@
 package org.software.code.vo;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,67 +21,56 @@ public class UserListVo {
     /**
      * 用户ID
      */
-    @JsonProperty("user_id")
     private Long userId;
 
     /**
      * 手机号
      */
-    @JsonProperty("phone")
     private String phone;
 
     /**
      * 昵称
      */
-    @JsonProperty("nickname")
     private String nickname;
 
     /**
      * 真实姓名
      */
-    @JsonProperty("real_name")
     private String realName;
 
     /**
      * 身份证号
      */
-    @JsonProperty("id_card")
     private String idCard;
 
     /**
      * 头像URL
      */
-    @JsonProperty("avatar")
     private String avatar;
 
     /**
      * 状态
      */
-    @JsonProperty("status")
     private String status;
 
     /**
      * 状态名称
      */
-    @JsonProperty("status_name")
     private String statusName;
 
     /**
      * 余额
      */
-    @JsonProperty("balance")
     private BigDecimal balance;
 
     /**
      * 创建时间
      */
-    @JsonProperty("created_time")
     private LocalDateTime createdTime;
 
     /**
      * 更新时间
      */
-    @JsonProperty("updated_time")
     private LocalDateTime updatedTime;
 
     /**
