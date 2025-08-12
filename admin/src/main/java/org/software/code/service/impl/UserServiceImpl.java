@@ -125,7 +125,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         logger.info("审核用户，用户ID：{}，审核结果：{}", userId, auditDto.getAuditResult());
 
         try {
-            org.software.code.entity.User user = userMapper.selectById(userId);
+            User user = userMapper.selectById(userId);
             if (user == null) {
                 logger.warn("用户不存在，用户ID：{}", userId);
                 return false;
@@ -186,7 +186,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         logger.info("禁用用户，用户ID：{}，原因：{}", userId, reason);
 
         try {
-            org.software.code.entity.User user = userMapper.selectById(userId);
+            User user = userMapper.selectById(userId);
             if (user == null) {
                 return false;
             }
@@ -363,7 +363,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     private Boolean updateUserStatus(Long userId, String status, Long adminId) {
         try {
-            org.software.code.entity.User user = userMapper.selectById(userId);
+            User user = userMapper.selectById(userId);
             if (user == null) {
                 return false;
             }
