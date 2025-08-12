@@ -1,6 +1,5 @@
 package org.software.code.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,7 +19,6 @@ public class RefreshTokenDto {
     /**
      * 刷新Token
      */
-    @JsonProperty("refresh_token")
     @NotBlank(message = "刷新Token不能为空")
     private String refreshToken;
 }
