@@ -35,6 +35,7 @@
         <result column="amount" property="amount" />
         <result column="actual_amount" property="actualAmount" />
         <result column="status" property="status" />
+        <result column="reason" property="reason" />
         <result column="transaction_id" property="transactionId" />
         <result column="entry_site_name" property="entrySiteName" />
         <result column="entry_site_line" property="entrySiteLine" />
@@ -46,9 +47,9 @@
     <select id="selectUserTransitRecordsWithSites" resultMap="TransitRecordWithSitesMap">
         SELECT 
             tr.id, tr.user_id, tr.mode, tr.entry_site_id, tr.exit_site_id,
-            tr.entry_time, tr.exit_time, tr.amount, tr.actual_amount, tr.status, tr.transaction_id,
-            es.site_name as entry_site_name, es.line_name as entry_site_line,
-            xs.site_name as exit_site_name, xs.line_name as exit_site_line
+            tr.entry_time, tr.exit_time, tr.amount, tr.actual_amount, tr.status, tr.reason, tr.transaction_id,
+            es.site_name as entry_site_name, es.line as entry_site_line,
+            xs.site_name as exit_site_name, xs.line as exit_site_line
         FROM 
             transit_record tr
         LEFT JOIN 
