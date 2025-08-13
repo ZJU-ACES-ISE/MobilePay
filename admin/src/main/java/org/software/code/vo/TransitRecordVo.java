@@ -2,20 +2,28 @@ package org.software.code.vo;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * 用户出行记录VO
- * 
+ * 用户出行记录VO（管理后台使用）
  */
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class TransitRecordVo implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    /**
+     * 记录ID
+     */
+    private Long id;
 
     /**
      * 用户ID
@@ -23,37 +31,32 @@ public class TransitRecordVo implements Serializable {
     private Long userId;
 
     /**
-     * 出行方式
+     * 出行方式(如地铁/公交)
      */
     private String mode;
 
     /**
-     * 城市
+     * 入站站点ID
      */
-    private String city;
+    private Long entrySiteId;
 
     /**
-     * 进站站点名称
+     * 出站站点ID
      */
-    private String entrySiteName;
+    private Long exitSiteId;
 
     /**
-     * 出站站点名称
+     * 入站设备ID
      */
-    private String exitSiteName;
+    private Long entryDeviceId;
 
     /**
-     * 进站设备名称
+     * 出站设备ID
      */
-    private String entryDeviceName;
+    private Long exitDeviceId;
 
     /**
-     * 出站设备名称
-     */
-    private String exitDeviceName;
-
-    /**
-     * 进站时间
+     * 入站时间
      */
     private LocalDateTime entryTime;
 
@@ -63,7 +66,7 @@ public class TransitRecordVo implements Serializable {
     private LocalDateTime exitTime;
 
     /**
-     * 原始费用
+     * 费用
      */
     private BigDecimal amount;
 
@@ -73,34 +76,24 @@ public class TransitRecordVo implements Serializable {
     private BigDecimal discountAmount;
 
     /**
-     * 实际支付金额
+     * 实际扣费金额
      */
     private BigDecimal actualAmount;
 
     /**
-     * 出行状态
+     * 出站状态（0正常，1支付异常，2出行异常）
      */
     private Integer status;
 
     /**
-     * 状态名称
-     */
-    private String statusName;
-
-    /**
-     * 原因
+     * 异常原因（status为1或2时记录）
      */
     private String reason;
 
     /**
-     * 交易ID
+     * 交易记录编号（正常出站时记录）
      */
     private String transactionId;
-
-    /**
-     * 出行时长（分钟）
-     */
-    private Long durationMinutes;
 
     /**
      * 创建时间
