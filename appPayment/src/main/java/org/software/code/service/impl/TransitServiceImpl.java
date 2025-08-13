@@ -69,15 +69,25 @@ public class TransitServiceImpl implements TransitService {
             Long userId = JwtUtil.extractID(token);
             
             // 查询用户是否有未完成的出行记录
-            LambdaQueryWrapper<TransitRecord> queryWrapper = Wrappers.<TransitRecord>lambdaQuery()
-                    .eq(TransitRecord::getUserId, userId)
-                    .isNull(TransitRecord::getExitSiteId)
-                    .isNull(TransitRecord::getExitTime)
-                    .eq(TransitRecord::getStatus, 0);
-            TransitRecord existingRecord = transitRecordMapper.selectOne(queryWrapper);
+            TransitRecord existingRecord = getUnfinishedTransitRecord(userId);
             
             if (existingRecord != null) {
-                return Result.instance(ResultEnum.FAILED.getCode(), "您有未完成的出行记录，请先出站", null);
+                // 查询未完成记录的入站站点信息
+                Site entrySite = siteMapper.selectById(existingRecord.getEntrySiteId());
+                String stationName = entrySite != null ? entrySite.getSiteName() : "未知站点";
+                String entryTimeStr = existingRecord.getEntryTime() != null ? 
+                        existingRecord.getEntryTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) : "未知时间";
+                
+                // 构建详细的错误信息
+                String errorMessage = String.format(
+                    "您有未完成的出行记录，请先出站。入站站点：%s，入站时间：%s，交通方式：%s", 
+                    stationName, 
+                    entryTimeStr,
+                    existingRecord.getMode()
+                );
+                
+                // 返回详细的错误信息
+                return Result.instance(ResultEnum.FAILED.getCode(), errorMessage, null);
             }
             
             // 查询站点信息
@@ -92,8 +102,11 @@ public class TransitServiceImpl implements TransitService {
             // 解析入站时间
             LocalDateTime entryTime;
             try {
+                System.out.println("DEBUG - 解析入站时间: " + requestDto.getEntryTime());
                 entryTime = LocalDateTime.parse(requestDto.getEntryTime(), DATETIME_FORMATTER);
+                System.out.println("DEBUG - 解析后的入站时间: " + entryTime);
             } catch (DateTimeParseException e) {
+                System.out.println("DEBUG - 入站时间解析失败: " + e.getMessage());
                 return Result.instance(ResultEnum.FAILED.getCode(), "入站时间格式不正确，请使用yyyy-MM-dd HH:mm:ss格式", null);
             }
             
@@ -139,12 +152,7 @@ public class TransitServiceImpl implements TransitService {
             Long userId = JwtUtil.extractID(token);
             
             // 查询用户的未完成出行记录
-            LambdaQueryWrapper<TransitRecord> queryWrapper = Wrappers.<TransitRecord>lambdaQuery()
-                    .eq(TransitRecord::getUserId, userId)
-                    .isNull(TransitRecord::getExitSiteId)
-                    .isNull(TransitRecord::getExitTime)
-                    .eq(TransitRecord::getStatus, 0);
-            TransitRecord transitRecord = transitRecordMapper.selectOne(queryWrapper);
+            TransitRecord transitRecord = getUnfinishedTransitRecord(userId);
             
             // 查询出站站点信息
             LambdaQueryWrapper<Site> siteQueryWrapper = Wrappers.<Site>lambdaQuery()
@@ -158,8 +166,11 @@ public class TransitServiceImpl implements TransitService {
             // 解析出站时间
             LocalDateTime exitTime;
             try {
+                System.out.println("DEBUG - 解析出站时间: " + requestDto.getExitTime());
                 exitTime = LocalDateTime.parse(requestDto.getExitTime(), DATETIME_FORMATTER);
+                System.out.println("DEBUG - 解析后的出站时间: " + exitTime);
             } catch (DateTimeParseException e) {
+                System.out.println("DEBUG - 出站时间解析失败: " + e.getMessage());
                 return Result.instance(ResultEnum.FAILED.getCode(), "出站时间格式不正确，请使用yyyy-MM-dd HH:mm:ss格式", null);
             }
             
@@ -188,8 +199,8 @@ public class TransitServiceImpl implements TransitService {
                 
                 return Result.instance(ResultEnum.FAILED.getCode(), "出站失败", responseVo);
             }
+
             
-            // 检查时间合理性
             if (exitTime.isBefore(transitRecord.getEntryTime())) {
                 responseVo.setTransitId(transitRecord.getTransactionId());
                 responseVo.setStatus(2); // 出行异常
@@ -200,7 +211,22 @@ public class TransitServiceImpl implements TransitService {
                 transitRecord.setReason("出站时间早于进站时间");
                 transitRecordMapper.updateById(transitRecord);
                 
-                return Result.instance(ResultEnum.FAILED.getCode(), "出站失败", responseVo);
+                return Result.instance(ResultEnum.FAILED.getCode(), "出站失败：出站时间早于进站时间", responseVo);
+            }
+            
+            // 检查出站时间是否超过入站时间24小时
+            LocalDateTime maxExitTime = transitRecord.getEntryTime().plusHours(24);
+            if (exitTime.isAfter(maxExitTime)) {
+                responseVo.setTransitId(transitRecord.getTransactionId());
+                responseVo.setStatus(2); // 出行异常
+                responseVo.setReason("出站时间超过入站时间24小时");
+                
+                // 更新记录状态
+                transitRecord.setStatus(2); // 异常状态
+                transitRecord.setReason("出站时间超过入站时间24小时");
+                transitRecordMapper.updateById(transitRecord);
+                
+                return Result.instance(ResultEnum.FAILED.getCode(), "出站失败：超过24小时限制", responseVo);
             }
             
             // 计算持续时间（分钟）
@@ -299,39 +325,53 @@ public class TransitServiceImpl implements TransitService {
             List<TransitRecordVo> transitRecordVos = new ArrayList<>();
             for (Map<String, Object> record : records) {
                 TransitRecordVo vo = new TransitRecordVo();
-                // 设置基本属性
-                vo.setId(record.get("id") != null ? Long.valueOf(record.get("id").toString()) : null);
-                vo.setUserId(record.get("userId") != null ? Long.valueOf(record.get("userId").toString()) : null);
+                // 设置基本属性（不包含id）
+                vo.setUserId(record.get("user_id") != null ? Long.valueOf(record.get("user_id").toString()) : null);
                 vo.setMode(record.get("mode") != null ? record.get("mode").toString() : null);
-                vo.setEntrySiteId(record.get("entrySiteId") != null ? Long.valueOf(record.get("entrySiteId").toString()) : null);
-                vo.setEntrySiteName(record.get("entrySiteName") != null ? record.get("entrySiteName").toString() : null);
-                vo.setEntrySiteLine(record.get("entrySiteLine") != null ? record.get("entrySiteLine").toString() : null);
+                vo.setEntrySiteId(record.get("entry_site_id") != null ? Long.valueOf(record.get("entry_site_id").toString()) : null);
+                vo.setEntrySiteName(record.get("entry_site_name") != null ? record.get("entry_site_name").toString() : null);
+                vo.setEntrySiteLine(record.get("entry_site_line") != null ? record.get("entry_site_line").toString() : null);
+                
                 // 设置可能为空的属性
-                if (record.get("exitSiteId") != null) {
-                    vo.setExitSiteId(record.get("exitSiteId") != null ? Long.valueOf(record.get("exitSiteId").toString()) : null);
-                    vo.setExitSiteName(record.get("exitSiteName") != null ? record.get("exitSiteName").toString() : null);
-                    vo.setExitSiteLine(record.get("exitSiteLine") != null ? record.get("exitSiteLine").toString() : null);
+                if (record.get("exit_site_id") != null) {
+                    vo.setExitSiteId(record.get("exit_site_id") != null ? Long.valueOf(record.get("exit_site_id").toString()) : null);
+                    vo.setExitSiteName(record.get("exit_site_name") != null ? record.get("exit_site_name").toString() : null);
+                    vo.setExitSiteLine(record.get("exit_site_line") != null ? record.get("exit_site_line").toString() : null);
                 }
-                String entryTimeStr = record.get("entryTime") != null ? record.get("entryTime").toString() : null;
+                
+                // 解析日期时间
+                String entryTimeStr = record.get("entry_time") != null ? record.get("entry_time").toString() : null;
                 if (entryTimeStr != null) {
                     vo.setEntryTime(LocalDateTime.parse(entryTimeStr, DATETIME_FORMATTER));
                 }
-                if (record.get("exitTime") != null) {
-                    vo.setExitTime(LocalDateTime.parse(record.get("exitTime").toString(), DATETIME_FORMATTER));
+                if (record.get("exit_time") != null) {
+                    vo.setExitTime(LocalDateTime.parse(record.get("exit_time").toString(), DATETIME_FORMATTER));
                 }
+                
+                // 设置金额
                 if (record.get("amount") != null) {
                     vo.setAmount(new BigDecimal(record.get("amount").toString()));
                 }
-                if (record.get("actualAmount") != null) {
-                    vo.setActualAmount(new BigDecimal(record.get("actualAmount").toString()));
+                if (record.get("actual_amount") != null) {
+                    vo.setActualAmount(new BigDecimal(record.get("actual_amount").toString()));
                 }
+                
+                // 设置状态和原因
                 vo.setStatus(record.get("status") != null ? Integer.valueOf(record.get("status").toString()) : null);
-                if (record.get("reason") != null) {
+                
+                // 特别处理reason字段，确保它被正确设置
+                if (record.get("reason") != null && record.get("reason").toString().trim().length() > 0) {
                     vo.setReason(record.get("reason").toString());
+                    System.out.println("DEBUG - 设置了reason: " + record.get("reason").toString());
+                } else {
+                    System.out.println("DEBUG - reason为空");
                 }
-                if (record.get("transactionId") != null) {
-                    vo.setTransactionId(record.get("transactionId").toString());
+                
+                // 设置交易ID
+                if (record.get("transaction_id") != null) {
+                    vo.setTransactionId(record.get("transaction_id").toString());
                 }
+                
                 transitRecordVos.add(vo);
             }
             
@@ -535,6 +575,23 @@ public class TransitServiceImpl implements TransitService {
     }
 
     
+    /**
+     * 获取用户未完成的出行记录（仅状态正常的记录）
+     * @param userId 用户ID
+     * @return 未完成的出行记录，如果没有则返回null
+     */
+    private TransitRecord getUnfinishedTransitRecord(Long userId) {
+        // 查询用户是否有未完成的出行记录（仅状态为正常的记录）
+        LambdaQueryWrapper<TransitRecord> queryWrapper = Wrappers.<TransitRecord>lambdaQuery()
+                .eq(TransitRecord::getUserId, userId)
+                .eq(TransitRecord::getStatus, 0)  // 只查询状态正常的记录
+                .isNull(TransitRecord::getExitSiteId)
+                .isNull(TransitRecord::getExitTime)
+                .orderByDesc(TransitRecord::getEntryTime)  // 按入站时间倒序排列
+                .last("LIMIT 1");  // 只返回最近的一条记录
+        return transitRecordMapper.selectOne(queryWrapper);
+    }
+
     /**
      * 默认费用计算方法
      * @param entrySiteId 入站站点ID
