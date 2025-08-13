@@ -2,8 +2,10 @@ package org.software.code.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 /**
  * 用户资料审核提交请求
@@ -20,11 +22,11 @@ public class UserAuditSubmitRequest {
     private String realName;
     
     /**
-     * 身份证正面照片URL
+     * 身份证正面照片文件
      */
-    @NotBlank(message = "身份证正面照片不能为空")
-    @Schema(description = "身份证正面照片存储地址", required = true, example = "https://xxx.com/front.jpg")
-    private String idCardFrontUrl;
+    @NotNull(message = "身份证正面照片不能为空")
+    @Schema(description = "身份证正面照片文件", required = true)
+    private MultipartFile idCardFrontFile;
     
     /**
      * 身份证号码
@@ -34,9 +36,9 @@ public class UserAuditSubmitRequest {
     private String idCard;
     
     /**
-     * 身份证背面照片URL
+     * 身份证背面照片文件
      */
-    @NotBlank(message = "身份证背面照片不能为空")
-    @Schema(description = "身份证背面照片存储地址", required = true, example = "https://xxx.com/back.jpg")
-    private String idCardBackUrl;
+    @NotNull(message = "身份证背面照片不能为空")
+    @Schema(description = "身份证背面照片文件", required = true)
+    private MultipartFile idCardBackFile;
 } 
