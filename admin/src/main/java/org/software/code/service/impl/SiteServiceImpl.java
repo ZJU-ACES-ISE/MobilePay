@@ -11,11 +11,11 @@ import org.software.code.dto.SiteCreateDto;
 import org.software.code.dto.SiteSearchDto;
 import org.software.code.dto.SiteUpdateDto;
 import org.software.code.entity.Site;
-import org.software.code.entity.TransitRecord;
 import org.software.code.entity.TurnstileDevice;
+import org.software.code.entity.TransitRecord;
 import org.software.code.mapper.SiteMapper;
-import org.software.code.mapper.TransitRecordMapper;
 import org.software.code.mapper.TurnstileDeviceMapper;
+import org.software.code.mapper.TransitRecordMapper;
 import org.software.code.service.SiteService;
 import org.software.code.vo.SiteDetailVo;
 import org.software.code.vo.SiteListVo;
@@ -472,7 +472,7 @@ public class SiteServiceImpl extends ServiceImpl<SiteMapper, Site> implements Si
         if (devices == null || devices.isEmpty()) {
             return new ArrayList<>();
         }
-        
+
         return devices.stream()
                 .map(this::convertToDeviceSimpleVo)
                 .collect(Collectors.toList());
@@ -526,7 +526,7 @@ public class SiteServiceImpl extends ServiceImpl<SiteMapper, Site> implements Si
                     .ge(TransitRecord::getCreatedTime, startOfMonth)
                     .lt(TransitRecord::getCreatedTime, now)
             );
-            
+
             // 计算当前月份已经过的天数
             int daysInMonth = now.getDayOfMonth();
             Double averageDailyFlow = daysInMonth > 0 ? monthlyTotalFlow.doubleValue() / daysInMonth : 0.0;
