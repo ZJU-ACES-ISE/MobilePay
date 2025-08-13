@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.software.code.mapper.TransferRecordMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="org.software.code.entity.TransferRecord">
+        <id column="id" property="id" />
+        <result column="transfer_number" property="transferNumber" />
+        <result column="user_id" property="userId" />
+        <result column="user_name" property="userName" />
+        <result column="type" property="type" />
+        <result column="bank_card_id" property="bankCardId" />
+        <result column="target_id" property="targetId" />
+        <result column="target_type" property="targetType" />
+        <result column="target_name" property="targetName" />
+        <result column="biz_category" property="bizCategory" />
+        <result column="amount" property="amount" />
+        <result column="discount_amount" property="discountAmount" />
+        <result column="actual_amount" property="actualAmount" />
+        <result column="complete_time" property="completeTime" />
+        <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, transfer_number, user_id, user_name, type, bank_card_id, target_id, target_type, target_name, biz_category, amount, discount_amount, actual_amount, complete_time, remark
+    </sql>
+
+</mapper>

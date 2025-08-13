@@ -1,5 +1,7 @@
 package org.software.code.filter;
 
+import cn.hutool.crypto.digest.HMac;
+import cn.hutool.crypto.digest.HmacAlgorithm;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
@@ -8,6 +10,8 @@ import org.software.code.common.except.BusinessException;
 import org.software.code.common.except.ExceptionEnum;
 import org.software.code.common.result.Result;
 import org.software.code.common.util.JwtUtil;
+import org.software.code.common.util.RedisUtil;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -42,6 +46,11 @@ public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
     @Resource
     private ObjectMapper objectMapper;
 
+    @Resource
+    private RedisUtil redisUtil;
+    @Value("${app.internal.secret}")
+    private String internalSecret;
+
     private static final String TOKEN_PREFIX = "Bearer ";
     
     // White-list
@@ -49,6 +58,15 @@ public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
         "/user/auth/login",
         "/user/auth/register", 
         "/admin/auth/login",
+        "/admin/auth/refresh",
+        "/app/v3/api-docs",
+        "/app/swagger-ui",
+        "/app/user/register",
+        "/app/user/login",
+        "/app/verifyCode",
+        "/app/user/password/reset",
+        "/admin/v3/api-docs",
+        "/user/v3/api-docs",
         "/swagger-ui",
         "/v3/api-docs",
         "/webjars"
@@ -79,7 +97,13 @@ public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
                         logger.warn("Token validation failed for path: {}", path);
                         return handleAuthError(exchange, ExceptionEnum.TOKEN_EXPIRED);
                     }
-                    
+
+                    // 检查token是否在黑名单中
+                    if (redisUtil.isTokenBlacklisted(token)) {
+                        logger.warn("Token is blacklisted for path: {}", path);
+                        return handleAuthError(exchange, ExceptionEnum.TOKEN_EXPIRED);
+                    }
+
                     return addUserInfoToRequest(exchange, token, chain);
                 })
                 .onErrorResume(throwable -> {
@@ -110,17 +134,18 @@ public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
     }
 
     /**
-     * 验证Token有效性
+     * 验证Token有效性（包括黑名单检查）
      */
     private Mono<Boolean> validateToken(String token) {
         return Mono.fromCallable(() -> {
-            // 验证Token格式和有效性
+            // 先检查JWT基本有效性
             if (!JwtUtil.validateToken(token)) {
                 return false;
             }
-            
-            // 验证Token类型
-            return JwtUtil.validateTokenType(token, JwtUtil.ACCESS_TOKEN);
+
+            // 再检查是否在Redis黑名单中
+            String tokenHash = JwtUtil.hashToken(token);
+            return !redisUtil.isTokenBlacklisted(tokenHash);
         }).onErrorReturn(false);
     }
 
@@ -135,23 +160,43 @@ public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
             
             logger.info("User authenticated: userId={}, role={}", userId, role);
             
-            // 将用户信息添加到请求头
+            // 生成内部认证信息
+            String internalToken = generateInternalToken(exchange.getRequest());
+
+            // 将用户信息和内部认证信息添加到请求头
             ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
-                    .header("X-User-Id", userId.toString())
+                    .header("X-User-Id", String.valueOf(userId))
                     .header("X-User-Role", role)
+                    .header("X-Internal-Token", internalToken)
+                    .header("X-Gateway-Source", "mobilepay-gateway")
+                    .header("Authorization", token)
                     .build();
             
             return exchange.mutate().request(modifiedRequest).build();
-        }).flatMap(modifiedExchange -> {
-            // 检查权限（如果需要的话）
-            return checkPermissions(modifiedExchange, token)
-                    .flatMap(hasPermission -> {
-                        if (!hasPermission) {
-                            return handleAuthError(exchange, ExceptionEnum.GATEWAY_PERMISSION_DENIED);
-                        }
-                        return chain.filter(modifiedExchange);
-                    });
-        });
+        }).flatMap(modifiedExchange -> checkPermissions(modifiedExchange, token)
+                .flatMap(hasPermission -> {
+                    if (!hasPermission) {
+                        return handleAuthError(exchange, ExceptionEnum.GATEWAY_PERMISSION_DENIED);
+                    }
+                    return chain.filter(modifiedExchange);
+                }));
+    }
+
+    /**
+     * 生成内部认证Token
+     *
+     * <p>基于请求方法、URI和内部密钥生成HMAC-SHA256签名，
+     * 不再依赖时间戳，简化了认证流程。</p>
+     */
+    private String generateInternalToken(ServerHttpRequest request) {
+        // 构建签名内容：method + uri + secret
+        String method = request.getMethod() != null ? request.getMethod().name() : "GET";
+        String uri = request.getURI().getPath();
+        String signContent = method + "|" + uri + "|" + internalSecret;
+
+        // 使用HMAC-SHA256生成签名
+        HMac hmac = new HMac(HmacAlgorithm.HmacSHA256, internalSecret.getBytes(StandardCharsets.UTF_8));
+        return hmac.digestHex(signContent);
     }
 
     /**
@@ -170,8 +215,6 @@ public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
                 // user路径允许所有已认证用户
                 return true;
             }
-            
-            // 默认允许
             return true;
         }).onErrorReturn(false);
     }

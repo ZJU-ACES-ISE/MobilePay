@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.software.code.mapper.UserVerificationMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="org.software.code.entity.UserVerification">
+        <id column="id" property="id" />
+        <result column="user_id" property="userId" />
+        <result column="real_name" property="realName" />
+        <result column="id_card" property="idCard" />
+        <result column="id_card_front" property="idCardFront" />
+        <result column="id_card_back" property="idCardBack" />
+        <result column="status" property="status" />
+        <result column="reject_reason" property="rejectReason" />
+        <result column="submit_time" property="submitTime" />
+        <result column="audit_time" property="auditTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, user_id, real_name, id_card, id_card_front, id_card_back, status, reject_reason, submit_time, audit_time
+    </sql>
+
+</mapper>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.software.code.mapper.DiscountStrategyMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="org.software.code.entity.DiscountStrategy">
+        <id column="id" property="id" />
+        <result column="strategy_name" property="strategyName" />
+        <result column="strategy_type" property="strategyType" />
+        <result column="discount_type" property="discountType" />
+        <result column="discount_rate" property="discountRate" />
+        <result column="discount_amount" property="discountAmount" />
+        <result column="min_amount" property="minAmount" />
+        <result column="max_discount" property="maxDiscount" />
+        <result column="target_cities" property="targetCities" />
+        <result column="start_time" property="startTime" />
+        <result column="end_time" property="endTime" />
+        <result column="usage_limit" property="usageLimit" />
+        <result column="used_count" property="usedCount" />
+        <result column="status" property="status" />
+        <result column="created_by" property="createdBy" />
+        <result column="created_time" property="createdTime" />
+        <result column="updated_time" property="updatedTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, strategy_name, strategy_type, discount_type, discount_rate, discount_amount, min_amount, max_discount, target_cities, start_time, end_time, usage_limit, used_count, status, created_by, created_time, updated_time
+    </sql>
+
+</mapper>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.software.code.mapper.TransactionRecordMapper">
+
+    <!-- 根据用户ID和时间范围查询交易记录 -->
+    <select id="selectByUserIdAndTimeRange" resultType="org.software.code.entity.TransactionRecord">
+        SELECT 
+            id,
+            user_id,
+            amount,
+            transaction_type,
+            description,
+            merchant_name,
+            category,
+            status,
+            transaction_time,
+            create_time,
+            update_time
+        FROM transaction_record
+        WHERE user_id = #{userId}
+        AND transaction_time BETWEEN #{startTime} AND #{endTime}
+        AND status = 'SUCCESS'
+        ORDER BY transaction_time DESC
+    </select>
+
+    <!-- 根据用户ID查询月度交易记录 -->
+    <select id="selectByUserIdAndMonth" resultType="org.software.code.entity.TransactionRecord">
+        SELECT 
+            id,
+            user_id,
+            amount,
+            transaction_type,
+            description,
+            merchant_name,
+            category,
+            status,
+            transaction_time,
+            create_time,
+            update_time
+        FROM transaction_record
+        WHERE user_id = #{userId}
+        AND YEAR(transaction_time) = #{year}
+        AND MONTH(transaction_time) = #{month}
+        AND status = 'SUCCESS'
+        ORDER BY transaction_time DESC
+    </select>
+
+    <!-- 统计用户月度消费总额 -->
+    <select id="sumAmountByUserIdAndMonth" resultType="java.lang.Double">
+        SELECT COALESCE(SUM(amount), 0)
+        FROM transaction_record
+        WHERE user_id = #{userId}
+        AND YEAR(transaction_time) = #{year}
+        AND MONTH(transaction_time) = #{month}
+        AND status = 'SUCCESS'
+        AND transaction_type = 'PAYMENT'
+    </select>
+
+    <!-- 按类别统计用户消费 -->
+    <select id="groupByCategory" resultType="java.util.Map">
+        SELECT 
+            category,
+            COUNT(*) as count,
+            SUM(amount) as total_amount,
+            AVG(amount) as avg_amount
+        FROM transaction_record
+        WHERE user_id = #{userId}
+        AND transaction_time BETWEEN #{startTime} AND #{endTime}
+        AND status = 'SUCCESS'
+        AND transaction_type = 'PAYMENT'
+        GROUP BY category
+        ORDER BY total_amount DESC
+    </select>
+
+</mapper> 

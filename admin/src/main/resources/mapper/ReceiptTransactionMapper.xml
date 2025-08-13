@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.software.code.mapper.ReceiptTransactionMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="org.software.code.entity.ReceiptTransaction">
+        <id column="id" property="id" />
+        <result column="transaction_id" property="transactionId" />
+        <result column="payer_id" property="payerId" />
+        <result column="receiver_id" property="receiverId" />
+        <result column="receiver_name" property="receiverName" />
+        <result column="amount" property="amount" />
+        <result column="receipt_code_id" property="receiptCodeId" />
+        <result column="timestamp" property="timestamp" />
+        <result column="create_time" property="createTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, transaction_id, payer_id, receiver_id, receiver_name, amount, receipt_code_id, timestamp, create_time
+    </sql>
+
+</mapper>
