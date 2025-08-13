@@ -10,7 +10,18 @@ import org.software.code.vo.UserAuditStatusVo;
 public interface UserAuditService {
     
     /**
-     * 提交资料审核
+     * 提交资料审核（使用文件上传后的URL）
+     * @param token JWT令牌
+     * @param realName 真实姓名
+     * @param idCard 身份证号码
+     * @param idCardFrontUrl 身份证正面照片URL
+     * @param idCardBackUrl 身份证背面照片URL
+     * @return 提交结果
+     */
+    Result<?> submitAudit(String token, String realName, String idCard, String idCardFrontUrl, String idCardBackUrl);
+    
+    /**
+     * 提交资料审核（兼容旧版本）
      * @param token JWT令牌
      * @param request 审核提交请求
      * @return 提交结果
