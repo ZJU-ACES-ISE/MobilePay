@@ -18,19 +18,19 @@ import java.util.Date;
 @Component
 public class OSSUtil {
 
-    @Value("${aliyun.oss.endpoint}")
+    @Value("${aliyun.oss.endpoint:#{environment.getProperty('OSS_ENDPOINT')}}")
     private String endpoint;
 
-    @Value("${aliyun.oss.bucketName}")
+    @Value("${aliyun.oss.bucketName:#{environment.getProperty('OSS_BUCKET_NAME')}}")
     private String bucketName;
 
-    @Value("${aliyun.oss.urlPrefix}")
+    @Value("${aliyun.oss.urlPrefix:#{environment.getProperty('OSS_URL_PREFIX')}}")
     private String urlPrefix;
 
-    @Value("${aliyun.oss.accessKeyId:}")
+    @Value("${aliyun.oss.accessKeyId:#{environment.getProperty('OSS_ACCESS_KEY_ID')}}")
     private String accessKeyId;
 
-    @Value("${aliyun.oss.accessKeySecret:}")
+    @Value("${aliyun.oss.accessKeySecret:#{environment.getProperty('OSS_ACCESS_KEY_SECRET')}}")
     private String accessKeySecret;
 
     // 填写Bucket所在地域。以华北2（北京）为例，Region填写为cn-beijing。
@@ -46,12 +46,34 @@ public class OSSUtil {
 
     /**
      * 创建OSS客户端
+     * 优先使用配置文件中的配置，如果没有则尝试从环境变量获取
      */
     private OSS createOSSClient() {
-        // 检查配置文件中的凭证
+        // 记录配置来源
+        String endpointSource = "未配置";
+        String accessKeySource = "未配置";
+        
+        // 检查配置是否来自环境变量
+        if (System.getenv("OSS_ENDPOINT") != null && System.getenv("OSS_ENDPOINT").equals(endpoint)) {
+            endpointSource = "环境变量OSS_ENDPOINT";
+        } else if (endpoint != null && !endpoint.trim().isEmpty()) {
+            endpointSource = "配置文件aliyun.oss.endpoint";
+        }
+        
+        if (System.getenv("OSS_ACCESS_KEY_ID") != null && System.getenv("OSS_ACCESS_KEY_ID").equals(accessKeyId)) {
+            accessKeySource = "环境变量OSS_ACCESS_KEY_ID";
+        } else if (accessKeyId != null && !accessKeyId.trim().isEmpty()) {
+            accessKeySource = "配置文件aliyun.oss.accessKeyId";
+        }
+        
+        // 检查配置是否有效
+        if (endpoint == null || endpoint.trim().isEmpty()) {
+            throw new RuntimeException("OSS终端节点未配置：请在application.yml中配置aliyun.oss.endpoint或设置环境变量OSS_ENDPOINT");
+        }
+        
         if (accessKeyId == null || accessKeyId.trim().isEmpty() || 
             accessKeySecret == null || accessKeySecret.trim().isEmpty()) {
-            throw new RuntimeException("OSS凭证未配置：请在application.yml中配置 aliyun.oss.accessKeyId 和 aliyun.oss.accessKeySecret");
+            throw new RuntimeException("OSS凭证未配置：请在application.yml中配置aliyun.oss.accessKeyId和aliyun.oss.accessKeySecret或设置环境变量OSS_ACCESS_KEY_ID和OSS_ACCESS_KEY_SECRET");
         }
         
         // 确保endpoint包含协议
@@ -65,10 +87,13 @@ public class OSSUtil {
         // 暂时使用V1签名避免V4签名的兼容性问题
         clientBuilderConfiguration.setSignatureVersion(SignVersion.V1);
         
-        System.out.println("使用endpoint: " + fullEndpoint);
-        System.out.println("使用签名版本: V1");
+        System.out.println("OSS配置信息:");
+        System.out.println("- Endpoint: " + fullEndpoint + " (来源: " + endpointSource + ")");
+        System.out.println("- Bucket: " + bucketName + " (来源: " + (System.getenv("OSS_BUCKET_NAME") != null ? "环境变量" : "配置文件") + ")");
+        System.out.println("- AccessKey: " + accessKeyId.substring(0, Math.min(4, accessKeyId.length())) + "*** (来源: " + accessKeySource + ")");
+        System.out.println("- 签名版本: V1");
         
-        // 直接使用配置文件中的凭证创建OSS客户端
+        // 使用配置创建OSS客户端
         return new OSSClientBuilder().build(fullEndpoint, accessKeyId, accessKeySecret, clientBuilderConfiguration);
     }
 
@@ -79,29 +104,25 @@ public class OSSUtil {
      * @return 文件访问URL
      */
     public String uploadBytes(byte[] bytes, String objectKey) throws Exception {
-        System.out.println("=== OSSUtil Debug Info ===");
-        System.out.println("endpoint: " + endpoint);
-        System.out.println("bucketName: " + bucketName);
-        System.out.println("urlPrefix: " + urlPrefix);
-        System.out.println("accessKeyId: " + (accessKeyId != null ? accessKeyId.substring(0, Math.min(8, accessKeyId.length())) + "..." : "null"));
-        System.out.println("accessKeySecret: " + (accessKeySecret != null ? "***已配置***" : "null"));
-        System.out.println("objectKey: " + objectKey);
-        System.out.println("bytes length: " + (bytes != null ? bytes.length : "null"));
+        // 记录上传信息
+        System.out.println("=== OSS文件上传 ===");
+        System.out.println("- 文件路径: " + objectKey);
+        System.out.println("- 文件大小: " + (bytes != null ? bytes.length / 1024 + "KB" : "null"));
+        System.out.println("- URL前缀: " + urlPrefix + " (来源: " + (System.getenv("OSS_URL_PREFIX") != null ? "环境变量" : "配置文件") + ")");
         
         OSS ossClient = null;
         try {
-            System.out.println("开始创建OSS客户端...");
+            // 创建OSS客户端（会输出配置信息）
             ossClient = createOSSClient();
-            System.out.println("OSS客户端创建成功");
             
             // 创建PutObjectRequest对象
             PutObjectRequest putObjectRequest = new PutObjectRequest(
                 bucketName, objectKey, new ByteArrayInputStream(bytes));
             
-            System.out.println("开始上传到OSS...");
+            System.out.println("开始上传文件...");
             // 上传字节数组
             PutObjectResult result = ossClient.putObject(putObjectRequest);
-            System.out.println("OSS上传成功");
+            System.out.println("文件上传成功");
             
             // 返回文件访问URL
             String finalUrl = urlPrefix;
@@ -109,7 +130,7 @@ public class OSSUtil {
                 finalUrl += "/";
             }
             finalUrl += objectKey;
-            System.out.println("最终URL: " + finalUrl);
+            System.out.println("访问URL: " + finalUrl);
             return finalUrl;
             
         } catch (OSSException oe) {
