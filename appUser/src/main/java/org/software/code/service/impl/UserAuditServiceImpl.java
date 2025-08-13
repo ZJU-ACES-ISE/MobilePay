@@ -33,7 +33,7 @@ public class UserAuditServiceImpl implements UserAuditService {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Result<?> submitAudit(String token, UserAuditSubmitRequest request) {
+    public Result<?> submitAudit(String token, String realName, String idCard, String idCardFrontUrl, String idCardBackUrl) {
         try {
             // 从token中提取用户ID
             long userId = JwtUtil.extractID(token);
@@ -51,20 +51,20 @@ public class UserAuditServiceImpl implements UserAuditService {
             if (existingAudit != null) {
                 // 如果已经通过审核，不允许再次提交
                 userAudit = existingAudit;
-                userAudit.setRealName(request.getRealName());
-                userAudit.setIdCardFront(request.getIdCardFrontUrl());
-                userAudit.setIdCardBack(request.getIdCardBackUrl());
-                userAudit.setIdCard(request.getIdCard());
+                userAudit.setRealName(realName);
+                userAudit.setIdCardFront(idCardFrontUrl);
+                userAudit.setIdCardBack(idCardBackUrl);
+                userAudit.setIdCard(idCard);
                 userAudit.setSubmitTime(LocalDateTime.now());
                 userAuditMapper.updateById(userAudit);
             } else {
                 // 创建新的审核记录
                 userAudit = new UserAudit();
                 userAudit.setUserId(userId);
-                userAudit.setRealName(request.getRealName());
-                userAudit.setIdCardFront(request.getIdCardFrontUrl());
-                userAudit.setIdCardBack(request.getIdCardBackUrl());
-                userAudit.setIdCard(request.getIdCard());
+                userAudit.setRealName(realName);
+                userAudit.setIdCardFront(idCardFrontUrl);
+                userAudit.setIdCardBack(idCardBackUrl);
+                userAudit.setIdCard(idCard);
                 userAudit.setStatus("pending");
                 userAudit.setSubmitTime(LocalDateTime.now());
                 userAuditMapper.insert(userAudit);
