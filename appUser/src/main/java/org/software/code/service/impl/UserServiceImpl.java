@@ -6,6 +6,8 @@ import org.software.code.common.util.OSSUtil;
 import org.software.code.dto.PasswordUpdateRequest;
 import org.software.code.dto.UserProfileUpdateRequest;
 import org.software.code.entity.User;
+import org.software.code.entity.UserBalance;
+import org.software.code.mapper.UserBalanceMapper;
 import org.software.code.mapper.UserMapper;
 import org.software.code.service.UserService;
 import org.software.code.service.VerifyCodeService;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Date;
 import io.jsonwebtoken.Claims;
@@ -35,6 +38,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private UserBalanceMapper userBalanceMapper;
     
     @Autowired
     private VerifyCodeService verifyCodeService;
@@ -46,7 +52,10 @@ public class UserServiceImpl implements UserService {
     private OSSUtil ossUtil;
     
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-    
+
+    // 用户余额表默认值
+    private static final BigDecimal DEFAULT_USER_BALANCE = new BigDecimal("0.00");
+
     // JWT Token过期时间，30天
     private static final long TOKEN_EXPIRE_TIME = 30 * 24 * 60 * 60 * 1000L;
     
@@ -120,6 +129,15 @@ public class UserServiceImpl implements UserService {
         
         // 插入数据库
         userMapper.insert(user);
+
+        //设置用户余额默认值
+        UserBalance userBalance = new UserBalance();
+        userBalance.setUserId(user.getId());
+        userBalance.setBalance(DEFAULT_USER_BALANCE);
+        userBalance.setUpdateTime(now);
+
+        // 插入用户余额表数据库
+        userBalanceMapper.insert(userBalance);
         
         // 生成token
         String token = JwtUtil.generateJWToken(user.getId(), TOKEN_EXPIRE_TIME);
