@@ -138,48 +138,6 @@ public class OSSUtil {
     }
 
     /**
-     * 上传输入流到OSS
-     * @param inputStream 输入流
-     * @param objectKey 对象键（文件路径）
-     * @return 文件访问URL
-     */
-    public String uploadInputStream(InputStream inputStream, String objectKey) {
-        OSS ossClient = null;
-        try {
-            ossClient = createOSSClient();
-            
-            // 创建PutObjectRequest对象
-            PutObjectRequest putObjectRequest = new PutObjectRequest(
-                bucketName, objectKey, inputStream);
-            
-            // 上传输入流
-            PutObjectResult result = ossClient.putObject(putObjectRequest);
-            
-            // 返回文件访问URL
-            return urlPrefix + objectKey;
-            
-        } catch (OSSException oe) {
-            System.out.println("Caught an OSSException, which means your request made it to OSS, "
-                    + "but was rejected with an error response for some reason.");
-            System.out.println("Error Message:" + oe.getErrorMessage());
-            System.out.println("Error Code:" + oe.getErrorCode());
-            System.out.println("Request ID:" + oe.getRequestId());
-            System.out.println("Host ID:" + oe.getHostId());
-            throw new RuntimeException("OSS上传失败: " + oe.getErrorMessage(), oe);
-        } catch (ClientException ce) {
-            System.out.println("Caught an ClientException, which means the client encountered "
-                    + "a serious internal problem while trying to communicate with OSS, "
-                    + "such as not being able to access the network.");
-            System.out.println("Error Message:" + ce.getMessage());
-            throw new RuntimeException("OSS客户端错误: " + ce.getMessage(), ce);
-        } finally {
-            if (ossClient != null) {
-                ossClient.shutdown();
-            }
-        }
-    }
-
-    /**
      * 删除OSS文件
      * @param objectKey 对象键（文件路径）
      * @return 是否删除成功

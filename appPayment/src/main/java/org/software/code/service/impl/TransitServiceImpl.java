@@ -31,6 +31,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.Date;
+import java.text.SimpleDateFormat;
+import java.text.ParseException;
 
 /**
  * 出行服务实现类
@@ -59,6 +62,7 @@ public class TransitServiceImpl implements TransitService {
     private UserBalanceMapper userBalanceMapper;
     
     private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.S][.SSS]");
+    private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     
     @Override
     @Transactional
@@ -99,7 +103,7 @@ public class TransitServiceImpl implements TransitService {
                 return Result.instance(ResultEnum.FAILED.getCode(), "入站站点不存在", null);
             }
             
-            // 解析入站时间
+            // 解析入站时间 - 保持原始时间
             LocalDateTime entryTime;
             try {
                 System.out.println("DEBUG - 解析入站时间: " + requestDto.getEntryTime());
@@ -129,7 +133,7 @@ public class TransitServiceImpl implements TransitService {
                     .transitId(transitId)
                     .mode(requestDto.getMode())
                     .entryStation(requestDto.getEntryStation())
-                    .entryTime(entryTime)
+                    .entryTime(LocalDateTime.parse(DATE_FORMATTER.format(entryTime), DATETIME_FORMATTER))
                     .entryLine(entrySite.getLine())
                     .userId(userId)
                     .status(0)
@@ -163,7 +167,7 @@ public class TransitServiceImpl implements TransitService {
                 return Result.instance(ResultEnum.FAILED.getCode(), "出站站点不存在", null);
             }
             
-            // 解析出站时间
+            // 解析出站时间 - 保持原始时间
             LocalDateTime exitTime;
             try {
                 System.out.println("DEBUG - 解析出站时间: " + requestDto.getExitTime());
@@ -173,6 +177,13 @@ public class TransitServiceImpl implements TransitService {
                 System.out.println("DEBUG - 出站时间解析失败: " + e.getMessage());
                 return Result.instance(ResultEnum.FAILED.getCode(), "出站时间格式不正确，请使用yyyy-MM-dd HH:mm:ss格式", null);
             }
+            
+            // 调试：数据库中的入站记录时间
+            System.out.println("DEBUG - 数据库中的入站时间: " + transitRecord.getEntryTime());
+            System.out.println("DEBUG - 请求的出站时间: " + exitTime);
+            System.out.println("DEBUG - 时间比较结果: exitTime.isBefore(entryTime) = " + exitTime.isBefore(transitRecord.getEntryTime()));
+            System.out.println("DEBUG - 系统时区: " + java.time.ZoneId.systemDefault());
+            System.out.println("DEBUG - 当前系统时间: " + java.time.LocalDateTime.now());
             
             // 构建响应对象
             TransitExitResponseVo responseVo = new TransitExitResponseVo();
@@ -202,6 +213,7 @@ public class TransitServiceImpl implements TransitService {
 
             
             if (exitTime.isBefore(transitRecord.getEntryTime())) {
+                System.out.println("DEBUG - 出站时间早于进站时间: " + exitTime + " vs " + transitRecord.getEntryTime());
                 responseVo.setTransitId(transitRecord.getTransactionId());
                 responseVo.setStatus(2); // 出行异常
                 responseVo.setReason("出站时间早于进站时间");
@@ -325,51 +337,52 @@ public class TransitServiceImpl implements TransitService {
             List<TransitRecordVo> transitRecordVos = new ArrayList<>();
             for (Map<String, Object> record : records) {
                 TransitRecordVo vo = new TransitRecordVo();
-                // 设置基本属性（不包含id）
-                vo.setUserId(record.get("user_id") != null ? Long.valueOf(record.get("user_id").toString()) : null);
+                // 设置基本属性
+                vo.setId(record.get("id") != null ? Long.valueOf(record.get("id").toString()) : null);
+                vo.setUserId(record.get("userId") != null ? Long.valueOf(record.get("userId").toString()) : null);
                 vo.setMode(record.get("mode") != null ? record.get("mode").toString() : null);
-                vo.setEntrySiteId(record.get("entry_site_id") != null ? Long.valueOf(record.get("entry_site_id").toString()) : null);
-                vo.setEntrySiteName(record.get("entry_site_name") != null ? record.get("entry_site_name").toString() : null);
-                vo.setEntrySiteLine(record.get("entry_site_line") != null ? record.get("entry_site_line").toString() : null);
+                vo.setEntrySiteId(record.get("entrySiteId") != null ? Long.valueOf(record.get("entrySiteId").toString()) : null);
+                vo.setEntrySiteName(record.get("entrySiteName") != null ? record.get("entrySiteName").toString() : null);
+                vo.setEntrySiteLine(record.get("entrySiteLine") != null ? record.get("entrySiteLine").toString() : null);
                 
                 // 设置可能为空的属性
-                if (record.get("exit_site_id") != null) {
-                    vo.setExitSiteId(record.get("exit_site_id") != null ? Long.valueOf(record.get("exit_site_id").toString()) : null);
-                    vo.setExitSiteName(record.get("exit_site_name") != null ? record.get("exit_site_name").toString() : null);
-                    vo.setExitSiteLine(record.get("exit_site_line") != null ? record.get("exit_site_line").toString() : null);
+                if (record.get("exitSiteId") != null) {
+                    vo.setExitSiteId(record.get("exitSiteId") != null ? Long.valueOf(record.get("exitSiteId").toString()) : null);
+                    vo.setExitSiteName(record.get("exitSiteName") != null ? record.get("exitSiteName").toString() : null);
+                    vo.setExitSiteLine(record.get("exitSiteLine") != null ? record.get("exitSiteLine").toString() : null);
                 }
                 
                 // 解析日期时间
-                String entryTimeStr = record.get("entry_time") != null ? record.get("entry_time").toString() : null;
+                String entryTimeStr = record.get("entryTime") != null ? record.get("entryTime").toString() : null;
                 if (entryTimeStr != null) {
                     vo.setEntryTime(LocalDateTime.parse(entryTimeStr, DATETIME_FORMATTER));
                 }
-                if (record.get("exit_time") != null) {
-                    vo.setExitTime(LocalDateTime.parse(record.get("exit_time").toString(), DATETIME_FORMATTER));
+                if (record.get("exitTime") != null) {
+                    vo.setExitTime(LocalDateTime.parse(record.get("exitTime").toString(), DATETIME_FORMATTER));
                 }
                 
                 // 设置金额
                 if (record.get("amount") != null) {
                     vo.setAmount(new BigDecimal(record.get("amount").toString()));
                 }
-                if (record.get("actual_amount") != null) {
-                    vo.setActualAmount(new BigDecimal(record.get("actual_amount").toString()));
+                if (record.get("discountAmount") != null) {
+                    vo.setDiscountAmount(new BigDecimal(record.get("discountAmount").toString()));
+                }
+                if (record.get("actualAmount") != null) {
+                    vo.setActualAmount(new BigDecimal(record.get("actualAmount").toString()));
                 }
                 
                 // 设置状态和原因
                 vo.setStatus(record.get("status") != null ? Integer.valueOf(record.get("status").toString()) : null);
                 
-                // 特别处理reason字段，确保它被正确设置
+                // 设置reason字段
                 if (record.get("reason") != null && record.get("reason").toString().trim().length() > 0) {
                     vo.setReason(record.get("reason").toString());
-                    System.out.println("DEBUG - 设置了reason: " + record.get("reason").toString());
-                } else {
-                    System.out.println("DEBUG - reason为空");
                 }
                 
                 // 设置交易ID
-                if (record.get("transaction_id") != null) {
-                    vo.setTransactionId(record.get("transaction_id").toString());
+                if (record.get("transactionId") != null) {
+                    vo.setTransactionId(record.get("transactionId").toString());
                 }
                 
                 transitRecordVos.add(vo);
@@ -632,4 +645,5 @@ public class TransitServiceImpl implements TransitService {
         // 默认返回基础票价
         return baseFare;
     }
+
 } 
