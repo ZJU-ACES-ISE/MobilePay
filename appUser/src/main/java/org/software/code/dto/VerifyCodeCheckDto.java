@@ -8,7 +8,7 @@ import lombok.Data;
  */
 @Data
 @Schema(description = "验证码校验请求")
-public class VerifyCodeCheckRequest {
+public class VerifyCodeCheckDto {
     
     /**
      * 手机号

@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.software.code.common.result.Result;
 import org.software.code.common.util.OSSUtil;
-import org.software.code.dto.UserAuditSubmitRequest;
 import org.software.code.service.UserAuditService;
 import org.software.code.vo.UserAuditStatusVo;
 import org.springframework.beans.factory.annotation.Autowired;

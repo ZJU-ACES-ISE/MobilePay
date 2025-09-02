@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.software.code.common.result.Result;
-import org.software.code.dto.VerifyCodeCheckRequest;
+import org.software.code.dto.VerifyCodeCheckDto;
 import org.software.code.service.VerifyCodeService;
 import org.software.code.vo.VerifyCodeVo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,7 +59,7 @@ public class VerifyCodeController {
         @ApiResponse(responseCode = "401", description = "验证码错误或已过期")
     })
     @PostMapping("/check")
-    public Result<?> checkVerifyCode(@RequestBody VerifyCodeCheckRequest request) {
+    public Result<?> checkVerifyCode(@RequestBody VerifyCodeCheckDto request) {
         return verifyCodeService.checkVerifyCode(request.getPhone(), request.getVerifyCode(), request.getScene());
     }
 }

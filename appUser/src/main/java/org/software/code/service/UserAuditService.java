@@ -1,7 +1,6 @@
 package org.software.code.service;
 
 import org.software.code.common.result.Result;
-import org.software.code.dto.UserAuditSubmitRequest;
 import org.software.code.vo.UserAuditStatusVo;
 
 /**

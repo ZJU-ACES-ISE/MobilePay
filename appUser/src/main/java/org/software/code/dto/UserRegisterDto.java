@@ -8,7 +8,7 @@ import lombok.Data;
  */
 @Data
 @Schema(description = "用户注册请求")
-public class UserRegisterRequest {
+public class UserRegisterDto {
     
     /**
      * 手机号

@@ -3,8 +3,8 @@ package org.software.code.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.software.code.common.result.Result;
 import org.software.code.common.util.OSSUtil;
-import org.software.code.dto.PasswordUpdateRequest;
-import org.software.code.dto.UserProfileUpdateRequest;
+import org.software.code.dto.PasswordUpdateDto;
+import org.software.code.dto.UserProfileUpdateDto;
 import org.software.code.entity.User;
 import org.software.code.entity.UserBalance;
 import org.software.code.mapper.UserBalanceMapper;
@@ -26,7 +26,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Date;
 import io.jsonwebtoken.Claims;
-import org.software.code.dto.ResetPasswordRequest;
+import org.software.code.dto.ResetPasswordDto;
 import org.software.code.common.result.ResultEnum;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.slf4j.Logger;
@@ -201,7 +201,7 @@ public class UserServiceImpl implements UserService {
     
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Result<UserVo> updateUserProfile(String token, UserProfileUpdateRequest request) {
+    public Result<UserVo> updateUserProfile(String token, UserProfileUpdateDto request) {
         try {
             // 从token中提取用户ID
             long userId = JwtUtil.extractID(token);
@@ -265,7 +265,7 @@ public class UserServiceImpl implements UserService {
     
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Result<?> updatePaymentPassword(String token, PasswordUpdateRequest request) {
+    public Result<?> updatePaymentPassword(String token, PasswordUpdateDto request) {
         try {
             // 从token中提取用户ID
             long userId = JwtUtil.extractID(token);
@@ -299,7 +299,7 @@ public class UserServiceImpl implements UserService {
     
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Result<?> updatePassword(String token, PasswordUpdateRequest request) {
+    public Result<?> updatePassword(String token, PasswordUpdateDto request) {
         try {
             // 从token中提取用户ID
             long userId = JwtUtil.extractID(token);
@@ -397,7 +397,7 @@ public class UserServiceImpl implements UserService {
      * @return 重置结果
      */
     @Override
-    public Result<?> resetPassword(ResetPasswordRequest request) {
+    public Result<?> resetPassword(ResetPasswordDto request) {
         try {
             // 参数校验
             if (request == null || request.getPhone() == null || request.getPhone().isEmpty()
