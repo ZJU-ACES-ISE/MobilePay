@@ -11,7 +11,7 @@ import javax.validation.constraints.Pattern;
  */
 @Data
 @Schema(description = "重置密码请求")
-public class ResetPasswordRequest {
+public class ResetPasswordDto {
     
     /**
      * 手机号
