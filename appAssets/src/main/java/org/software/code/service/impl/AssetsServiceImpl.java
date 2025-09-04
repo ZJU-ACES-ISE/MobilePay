@@ -47,7 +47,7 @@ public class AssetsServiceImpl implements AssetsService {
 
     @Transactional
     @Override
-    public void topUp(BankTransferDto bankTransferDto) {
+    public void topUp(BankTransferDto bankTransferDto, Long uid) {
         // 查询银行卡信息
         BankCard bankCard = cardsMapper.selectById(bankTransferDto.getBankCardId());
         if (bankCard == null) {
@@ -56,6 +56,11 @@ public class AssetsServiceImpl implements AssetsService {
 
         //用户id获取
         Long userId = bankCard.getUserId();
+
+        //银行卡合法检验
+        if (!Objects.equals(bankCard.getUserId(), uid))
+            throw new BusinessException(ExceptionEnum.BANK_CARD_NOT_CORRECT);
+
         // 校验支付密码 - 通过Feign调用appUser服务
         if (!userClient.verifyPayPassword(userId, bankTransferDto.getPayPassword())) {
             throw new BusinessException(ExceptionEnum.PAY_PASSWORD_INVALID);
@@ -101,13 +106,19 @@ public class AssetsServiceImpl implements AssetsService {
 
     @Transactional
     @Override
-    public void withdraw(BankTransferDto bankTransferDto) {
+    public void withdraw(BankTransferDto bankTransferDto, Long uid) {
         BankCard bankCard = cardsMapper.selectById(bankTransferDto.getBankCardId());
         if (bankCard == null) {
             throw new BusinessException(ExceptionEnum.DATA_NOT_FOUND);
         }
 
+        //用户id获取
         Long userId = bankCard.getUserId();
+
+        //银行卡合法检验
+        if (!Objects.equals(bankCard.getUserId(), uid))
+            throw new BusinessException(ExceptionEnum.BANK_CARD_NOT_CORRECT);
+
         // 校验支付密码 - 通过Feign调用appUser服务
         if (!userClient.verifyPayPassword(userId, bankTransferDto.getPayPassword())) {
             throw new BusinessException(ExceptionEnum.PAY_PASSWORD_INVALID);
