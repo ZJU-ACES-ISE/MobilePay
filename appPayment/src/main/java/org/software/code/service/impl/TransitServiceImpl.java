@@ -331,14 +331,28 @@ public class TransitServiceImpl implements TransitService {
                 vo.setUserId(record.get("userId") != null ? Long.valueOf(record.get("userId").toString()) : null);
                 vo.setMode(record.get("mode") != null ? record.get("mode").toString() : null);
                 vo.setEntrySiteId(record.get("entrySiteId") != null ? Long.valueOf(record.get("entrySiteId").toString()) : null);
-                vo.setEntrySiteName(record.get("entrySiteName") != null ? record.get("entrySiteName").toString() : null);
-                vo.setEntrySiteLine(record.get("entrySiteLine") != null ? record.get("entrySiteLine").toString() : null);
+                
+                // 通过Feign调用获取入站站点信息
+                if (vo.getEntrySiteId() != null) {
+                    Site entrySite = getSiteById(vo.getEntrySiteId());
+                    if (entrySite != null) {
+                        vo.setEntrySiteName(entrySite.getSiteName());
+                        vo.setEntrySiteLine(entrySite.getLineName());
+                    }
+                }
                 
                 // 设置可能为空的属性
                 if (record.get("exitSiteId") != null) {
                     vo.setExitSiteId(record.get("exitSiteId") != null ? Long.valueOf(record.get("exitSiteId").toString()) : null);
-                    vo.setExitSiteName(record.get("exitSiteName") != null ? record.get("exitSiteName").toString() : null);
-                    vo.setExitSiteLine(record.get("exitSiteLine") != null ? record.get("exitSiteLine").toString() : null);
+                    
+                    // 通过Feign调用获取出站站点信息
+                    if (vo.getExitSiteId() != null) {
+                        Site exitSite = getSiteById(vo.getExitSiteId());
+                        if (exitSite != null) {
+                            vo.setExitSiteName(exitSite.getSiteName());
+                            vo.setExitSiteLine(exitSite.getLineName());
+                        }
+                    }
                 }
                 
                 // 解析日期时间
