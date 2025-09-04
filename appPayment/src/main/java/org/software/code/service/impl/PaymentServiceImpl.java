@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.zxing.*;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
+import org.software.code.common.except.BusinessException;
+import org.software.code.common.except.ExceptionEnum;
 import org.software.code.common.result.Result;
 import org.software.code.common.result.ResultEnum;
 import org.software.code.common.util.JwtUtil;
@@ -254,7 +256,7 @@ public class PaymentServiceImpl implements PaymentService {
             
             // 验证交易类型
             if (paymentConfirmDto.getType() == 2 && paymentConfirmDto.getBizCategory() == null) {
-                return Result.instance(ResultEnum.FAILED.getCode(), "支出交易必须指定分类", null);
+                return Result.instance(Integer.parseInt(ExceptionEnum.PARAMETER_ERROR.getCode()), ExceptionEnum.PARAMETER_ERROR.getMsg(), null);
             }
             
             // 解析金额
@@ -262,10 +264,10 @@ public class PaymentServiceImpl implements PaymentService {
             try {
                 amount = new BigDecimal(paymentConfirmDto.getActualAmount());
                 if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-                    return Result.instance(ResultEnum.FAILED.getCode(), "金额必须大于0", null);
+                    return Result.instance(Integer.parseInt(ExceptionEnum.PARAMETER_ERROR.getCode()), ExceptionEnum.PARAMETER_ERROR.getMsg(), null);
                 }
             } catch (NumberFormatException e) {
-                return Result.instance(ResultEnum.FAILED.getCode(), "金额格式不正确", null);
+                return Result.instance(Integer.parseInt(ExceptionEnum.PARAMETER_ERROR.getCode()), ExceptionEnum.PARAMETER_ERROR.getMsg(), null);
             }
             
             // 生成交易流水号
@@ -274,7 +276,7 @@ public class PaymentServiceImpl implements PaymentService {
             // 通过Feign调用获取用户余额
             BigDecimal balanceResult = assetsClient.getUserBalance(userId);
             if (balanceResult == null) {
-                return Result.instance(ResultEnum.FAILED.getCode(), "用户余额信息不存在", null);
+                return Result.instance(Integer.parseInt(ExceptionEnum.INSUFFICIENT_BALANCE.getCode()), ExceptionEnum.INSUFFICIENT_BALANCE.getMsg(), null);
             }
             
             // 根据交易类型处理余额
@@ -283,13 +285,13 @@ public class PaymentServiceImpl implements PaymentService {
                 // 收入 - 通过Feign调用增加余额
                 Boolean addResult = assetsClient.addBalance(userId, amount, "支付收入");
                 if (!addResult) {
-                    return Result.instance(ResultEnum.FAILED.getCode(), "余额更新失败", null);
+                    return Result.instance(Integer.parseInt(ExceptionEnum.PAYMENT_FAILED.getCode()), ExceptionEnum.PAYMENT_FAILED.getMsg(), null);
                 }
             } else {
                 // 支出 - 通过Feign调用扣减余额
                 Boolean deductResult = assetsClient.deductBalance(userId, amount, "支付支出");
                 if (!deductResult) {
-                    return Result.instance(ResultEnum.FAILED.getCode(), "余额不足或扣减失败", null);
+                    return Result.instance(Integer.parseInt(ExceptionEnum.INSUFFICIENT_BALANCE.getCode()), ExceptionEnum.INSUFFICIENT_BALANCE.getMsg(), null);
                 }
             }
             

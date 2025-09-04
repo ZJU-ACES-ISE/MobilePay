@@ -1,5 +1,8 @@
 package org.software.code.service.impl;
 
+import org.software.code.common.except.BusinessException;
+import org.software.code.common.except.ExceptionEnum;
+import org.software.code.common.except.ExceptionEnum;
 import org.software.code.common.result.Result;
 import org.software.code.common.result.ResultEnum;
 import org.software.code.common.util.JwtUtil;
@@ -32,7 +35,7 @@ public class UserPaymentServiceImpl implements UserPaymentService {
             BigDecimal balanceResult = assetsClient.getUserBalance(userId);
             
             if (balanceResult == null) {
-                return Result.instance(ResultEnum.FAILED.getCode(), "用户余额信息不存在", null);
+                return Result.instance(Integer.parseInt(ExceptionEnum.INSUFFICIENT_BALANCE.getCode()), ExceptionEnum.INSUFFICIENT_BALANCE.getMsg(), null);
             }
             
             // 构建返回结果
@@ -45,7 +48,7 @@ public class UserPaymentServiceImpl implements UserPaymentService {
             
         } catch (Exception e) {
             e.printStackTrace();
-            return Result.instance(ResultEnum.FAILED.getCode(), "服务器内部错误", null);
+            return Result.instance(Integer.parseInt(ExceptionEnum.RUN_EXCEPTION.getCode()), ExceptionEnum.RUN_EXCEPTION.getMsg(), null);
         }
     }
 } 

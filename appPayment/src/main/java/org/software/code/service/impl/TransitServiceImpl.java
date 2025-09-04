@@ -2,6 +2,8 @@ package org.software.code.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import org.software.code.common.except.BusinessException;
+import org.software.code.common.except.ExceptionEnum;
 import org.software.code.common.result.Result;
 import org.software.code.common.result.ResultEnum;
 import org.software.code.common.util.JwtUtil;
@@ -89,7 +91,7 @@ public class TransitServiceImpl implements TransitService {
                 );
                 
                 // 返回详细的错误信息
-                return Result.instance(ResultEnum.FAILED.getCode(), errorMessage, null);
+                return Result.instance(Integer.parseInt(ExceptionEnum.TRANSIT_CARD_NOT_FOUND.getCode()), errorMessage, null);
             }
             
             // 查询站点信息
@@ -98,7 +100,7 @@ public class TransitServiceImpl implements TransitService {
             Site entrySite = getSiteByName(requestDto.getEntryStation());
             
             if (entrySite == null) {
-                return Result.instance(ResultEnum.FAILED.getCode(), "入站站点不存在", null);
+                return Result.instance(Integer.parseInt(ExceptionEnum.STATION_NOT_FOUND.getCode()), ExceptionEnum.STATION_NOT_FOUND.getMsg(), null);
             }
             
             // 解析入站时间 - 保持原始时间
@@ -284,7 +286,7 @@ public class TransitServiceImpl implements TransitService {
                 transitRecord.setReason("余额不足");
                 updateTransactionRecord(transitRecord);
                 
-                return Result.instance(ResultEnum.FAILED.getCode(), "出站失败：余额不足", responseVo);
+                return Result.instance(Integer.parseInt(ExceptionEnum.TRANSIT_CARD_INSUFFICIENT_BALANCE.getCode()), "出站失败：余额不足", responseVo);
             }
             
             // 更新出行记录
@@ -303,7 +305,7 @@ public class TransitServiceImpl implements TransitService {
             
         } catch (Exception e) {
             e.printStackTrace();
-            return Result.instance(ResultEnum.FAILED.getCode(), "服务器内部错误", null);
+            return Result.instance(Integer.parseInt(ExceptionEnum.RUN_EXCEPTION.getCode()), ExceptionEnum.RUN_EXCEPTION.getMsg(), null);
         }
     }
     
