@@ -1,6 +1,5 @@
 package org.software.code.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.zxing.*;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
@@ -11,13 +10,10 @@ import org.software.code.common.util.JwtUtil;
 import org.software.code.common.util.OSSUtil;
 import org.software.code.dto.PaymentConfirmDto;
 import org.software.code.dto.QRCodeParseDto;
-import org.software.code.entity.UserBalance;
-import org.software.code.entity.TransactionRecord;
 import org.software.code.entity.ReceiptTransaction;
 import org.software.code.mapper.ReceiptTransactionMapper;
-import org.software.code.mapper.UserBalanceMapper;
-import org.software.code.mapper.TransactionRecordMapper;
-import org.software.code.mapper.UserMapper;
+import org.software.code.client.UserClient;
+import org.software.code.client.AssetsClient;
 import org.software.code.service.PaymentService;
 import org.software.code.vo.PaymentConfirmVo;
 import org.software.code.vo.QRCodeParseResultVo;
@@ -27,19 +23,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+
 import java.math.BigDecimal;
 import java.net.URL;
-import java.net.HttpURLConnection;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import org.software.code.entity.User;
 
 /**
  * 支付服务实现类
@@ -48,18 +39,14 @@ import org.software.code.entity.User;
 public class PaymentServiceImpl implements PaymentService {
 
 
+    @Autowired
+    private UserClient userClient;
     
     @Autowired
-    private UserBalanceMapper userBalanceMapper;
+    private AssetsClient assetsClient;
     
     @Autowired
     private OSSUtil ossUtil;
-    
-    @Autowired
-    private TransactionRecordMapper transactionRecordMapper;
-    
-    @Autowired
-    private UserMapper userMapper;
 
     @Autowired
     private ReceiptTransactionMapper receiptTransactionMapper;
@@ -286,55 +273,51 @@ public class PaymentServiceImpl implements PaymentService {
             // 生成交易流水号
             String transactionId = generateTransactionId();
             
-            // 从数据库获取用户余额
-            QueryWrapper<UserBalance> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("user_id", userId);
-            UserBalance userBalance = userBalanceMapper.selectOne(queryWrapper);
-            
-            if (userBalance == null) {
+            // 通过Feign调用获取用户余额
+            BigDecimal balanceResult = assetsClient.getUserBalance(userId);
+            if (balanceResult == null) {
                 return Result.instance(ResultEnum.FAILED.getCode(), "用户余额信息不存在", null);
             }
             
-            BigDecimal balance = userBalance.getBalance();
-            
-            // 计算交易后余额
+            // 根据交易类型处理余额
             BigDecimal balanceAfter;
             if (paymentConfirmDto.getType() == 1) {
-                // 收入
-                balanceAfter = balance.add(amount);
+                // 收入 - 通过Feign调用增加余额
+                Boolean addResult = assetsClient.addBalance(userId, amount, "支付收入");
+                if (!addResult) {
+                    return Result.instance(ResultEnum.FAILED.getCode(), "余额更新失败", null);
+                }
             } else {
-                // 支出
-                balanceAfter = balance.subtract(amount);
-                if (balanceAfter.compareTo(BigDecimal.ZERO) < 0) {
-                    return Result.instance(ResultEnum.FAILED.getCode(), "余额不足", null);
+                // 支出 - 通过Feign调用扣减余额
+                Boolean deductResult = assetsClient.deductBalance(userId, amount, "支付支出");
+                if (!deductResult) {
+                    return Result.instance(ResultEnum.FAILED.getCode(), "余额不足或扣减失败", null);
                 }
             }
             
-            // 更新用户余额
-            userBalance.setBalance(balanceAfter);
-            userBalance.setUpdateTime(LocalDateTime.now());
-            userBalanceMapper.updateById(userBalance);
+            // 重新获取更新后的余额
+            BigDecimal updatedBalanceResult = assetsClient.getUserBalance(userId);
+            balanceAfter = updatedBalanceResult != null ? updatedBalanceResult : BigDecimal.ZERO;
             
-            // 获取用户信息
-            User user = userMapper.selectById(userId);
-            String userName = (user != null && user.getNickname() != null) ? user.getNickname() : "用户" + userId;
+            // 通过Feign调用获取用户昵称
+            String userName = userClient.getUserNickname(userId);
+            userName = userName != null ? userName : "用户" + userId;
             
-            // 保存交易记录到数据库
-            TransactionRecord transactionRecord = TransactionRecord.builder()
-                    .transferNumber(transactionId)
-                    .userId(userId)
-                    .userName(userName)
-                    .type(paymentConfirmDto.getType())
-                    .targetId(paymentConfirmDto.getTargetId())
-                    .targetType(paymentConfirmDto.getTargetType())
-                    .targetName(paymentConfirmDto.getTargetName())
-                    .bizCategory(paymentConfirmDto.getBizCategory())
-                    .amount(amount)
-                    .completeTime(LocalDateTime.now())
-                    .remark("支付确认")
-                    .build();
+            // 通过Feign调用创建交易记录
+            Map<String, Object> transactionRecord = new HashMap<>();
+            transactionRecord.put("transferNumber", transactionId);
+            transactionRecord.put("userId", userId);
+            transactionRecord.put("userName", userName);
+            transactionRecord.put("type", paymentConfirmDto.getType());
+            transactionRecord.put("targetId", paymentConfirmDto.getTargetId());
+            transactionRecord.put("targetType", paymentConfirmDto.getTargetType());
+            transactionRecord.put("targetName", paymentConfirmDto.getTargetName());
+            transactionRecord.put("bizCategory", paymentConfirmDto.getBizCategory());
+            transactionRecord.put("amount", amount);
+            transactionRecord.put("completeTime", LocalDateTime.now());
+            transactionRecord.put("remark", "支付确认");
             
-            transactionRecordMapper.insert(transactionRecord);
+            assetsClient.createTransactionRecord(transactionRecord);
             
             // 生成交易完成时间
             LocalDateTime completeTime = LocalDateTime.now();

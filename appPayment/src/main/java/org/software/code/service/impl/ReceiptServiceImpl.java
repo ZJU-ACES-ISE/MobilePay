@@ -9,7 +9,7 @@ import org.software.code.entity.ReceiptCode;
 import org.software.code.entity.ReceiptTransaction;
 import org.software.code.mapper.ReceiptCodeMapper;
 import org.software.code.mapper.ReceiptTransactionMapper;
-import org.software.code.mapper.UserMapper;
+import org.software.code.client.UserClient;
 import org.software.code.service.ReceiptService;
 import org.software.code.vo.ReceiptCodeVo;
 import org.software.code.vo.ReceiptRecordVo;
@@ -18,7 +18,6 @@ import org.software.code.vo.SetAmountVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.software.code.entity.User;
 import org.software.code.common.result.ResultEnum;
 import org.software.code.vo.ReceiptConfirmVo;
 
@@ -49,8 +48,8 @@ public class ReceiptServiceImpl implements ReceiptService {
 
 
 
-    @Autowired(required = false)
-    private UserMapper userMapper;
+    @Autowired
+    private UserClient userClient;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -75,8 +74,8 @@ public class ReceiptServiceImpl implements ReceiptService {
             // 构建收款码数据
             Map<String, Object> receiptData = new HashMap<>();
             receiptData.put("targetId", userId);
-            User user = userMapper.selectById(userId);
-            String userName = (user != null && user.getNickname() != null) ? user.getNickname() : "收款用户";
+            String userName = userClient.getUserNickname(userId);
+            userName = (userName != null && !userName.isEmpty()) ? userName : "收款用户";
             receiptData.put("targetName", userName);
             receiptData.put("targetType", 1); // 1表示个人用户
             receiptData.put("bizCategory", 1); // 1表示收款业务
@@ -167,8 +166,8 @@ public class ReceiptServiceImpl implements ReceiptService {
 
             Map<String, Object> receiptData = new HashMap<>();
             receiptData.put("targetId", userId);
-            User user = userMapper.selectById(userId);
-            String userName = (user != null && user.getNickname() != null) ? user.getNickname() : "收款用户";
+            String userName = userClient.getUserNickname(userId);
+            userName = (userName != null && !userName.isEmpty()) ? userName : "收款用户";
             receiptData.put("targetName", userName);
             receiptData.put("targetType", 1);
             receiptData.put("bizCategory", 1);

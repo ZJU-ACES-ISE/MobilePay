@@ -1,6 +1,5 @@
 package org.software.code.filter;
 
-import lombok.var;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -13,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -61,7 +61,7 @@ public class RequestResponseLoggingFilter implements GlobalFilter, Ordered {
     HttpHeaders headers = request.getHeaders();
     logMessage.append("  Headers:\n");
     // 遍历并记录请求头信息
-    for (var entry : headers.toSingleValueMap().entrySet()) {
+    for (Map.Entry<String, String> entry : headers.toSingleValueMap().entrySet()) {
       logMessage.append("    ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
     }
 

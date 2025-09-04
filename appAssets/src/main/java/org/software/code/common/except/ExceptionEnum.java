@@ -109,6 +109,7 @@ public enum ExceptionEnum {
     PAY_PASSWORD_INVALID("60001", "支付密码错误"),
     BALANCE_NOT_ENOUGH("60002", "用户余额不足"),
     BALANCE_NOT_CREATE("60003", "用户余额表未创建" ),
+    BALANCE_INSUFFICIENT("60004", "余额不足"),
 
     //账单相关异常
     UPDATE_FAILED("70001", "账单更新失败");

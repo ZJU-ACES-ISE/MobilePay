@@ -1,13 +1,14 @@
 package org.software.code.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.software.code.common.result.Result;
 import org.software.code.common.util.OSSUtil;
 import org.software.code.dto.PasswordUpdateDto;
 import org.software.code.dto.UserProfileUpdateDto;
 import org.software.code.entity.User;
-import org.software.code.entity.UserBalance;
-import org.software.code.mapper.UserBalanceMapper;
+
+import org.software.code.client.AssetsClient;
 import org.software.code.mapper.UserMapper;
 import org.software.code.service.UserService;
 import org.software.code.service.VerifyCodeService;
@@ -33,14 +34,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Service
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
     private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
 
     @Autowired
     private UserMapper userMapper;
 
     @Autowired
-    private UserBalanceMapper userBalanceMapper;
+    private AssetsClient assetsClient;
     
     @Autowired
     private VerifyCodeService verifyCodeService;
@@ -130,14 +131,8 @@ public class UserServiceImpl implements UserService {
         // 插入数据库
         userMapper.insert(user);
 
-        //设置用户余额默认值
-        UserBalance userBalance = new UserBalance();
-        userBalance.setUserId(user.getId());
-        userBalance.setBalance(DEFAULT_USER_BALANCE);
-        userBalance.setUpdateTime(now);
-
-        // 插入用户余额表数据库
-        userBalanceMapper.insert(userBalance);
+        // 通过Feign调用创建用户余额记录
+        assetsClient.createUserBalance(user.getId(), DEFAULT_USER_BALANCE);
         
         // 生成token
         String token = JwtUtil.generateJWToken(user.getId(), TOKEN_EXPIRE_TIME);

@@ -8,7 +8,13 @@ import org.software.code.common.util.JwtUtil;
 import org.software.code.dto.TransitEntryRequestDto;
 import org.software.code.dto.TransitExitRequestDto;
 import org.software.code.entity.*;
-import org.software.code.mapper.*;
+import org.software.code.mapper.SiteFareMapper;
+import org.software.code.mapper.TransitRecordMapper;
+import org.software.code.client.UserClient;
+import org.software.code.client.AssetsClient;
+import org.software.code.client.AdminClient;
+import java.util.stream.Collectors;
+import java.util.ArrayList;
 import org.software.code.service.TransitService;
 import org.software.code.vo.FareCalculationVo;
 import org.software.code.vo.TransitEntryResponseVo;
@@ -40,26 +46,18 @@ import java.text.ParseException;
  */
 @Service
 public class TransitServiceImpl implements TransitService {
-
-
     
     @Autowired
-    private TransitRecordMapper transitRecordMapper;
-    
-    @Autowired
-    private SiteMapper siteMapper;
-    
-    @Autowired
-    private TurnstileDeviceMapper turnstileDeviceMapper;
+    private AdminClient adminClient;
     
     @Autowired
     private SiteFareMapper siteFareMapper;
     
     @Autowired
-    private UserMapper userMapper;
+    private TransitRecordMapper transitRecordMapper;
     
     @Autowired
-    private UserBalanceMapper userBalanceMapper;
+    private AssetsClient assetsClient;
     
     private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.S][.SSS]");
     private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -77,7 +75,7 @@ public class TransitServiceImpl implements TransitService {
             
             if (existingRecord != null) {
                 // 查询未完成记录的入站站点信息
-                Site entrySite = siteMapper.selectById(existingRecord.getEntrySiteId());
+                Site entrySite = getSiteById(existingRecord.getEntrySiteId());
                 String stationName = entrySite != null ? entrySite.getSiteName() : "未知站点";
                 String entryTimeStr = existingRecord.getEntryTime() != null ? 
                         existingRecord.getEntryTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) : "未知时间";
@@ -97,7 +95,7 @@ public class TransitServiceImpl implements TransitService {
             // 查询站点信息
             LambdaQueryWrapper<Site> siteQueryWrapper = Wrappers.<Site>lambdaQuery()
                     .eq(Site::getSiteName, requestDto.getEntryStation());
-            Site entrySite = siteMapper.selectOne(siteQueryWrapper);
+            Site entrySite = getSiteByName(requestDto.getEntryStation());
             
             if (entrySite == null) {
                 return Result.instance(ResultEnum.FAILED.getCode(), "入站站点不存在", null);
@@ -126,15 +124,15 @@ public class TransitServiceImpl implements TransitService {
             String transitId = "T" + System.currentTimeMillis() + (int)(Math.random() * 1000);
             transitRecord.setTransactionId(transitId);
             
-            transitRecordMapper.insert(transitRecord);
+            saveTransactionRecord(transitRecord);
             
             // 构建响应
             TransitEntryResponseVo responseVo = TransitEntryResponseVo.builder()
                     .transitId(transitId)
                     .mode(requestDto.getMode())
                     .entryStation(requestDto.getEntryStation())
-                    .entryTime(LocalDateTime.parse(DATE_FORMATTER.format(entryTime), DATETIME_FORMATTER))
-                    .entryLine(entrySite.getLine())
+                    .entryTime(entryTime)
+                    .entryLine(entrySite.getLineName())
                     .userId(userId)
                     .status(0)
                     .build();
@@ -159,9 +157,7 @@ public class TransitServiceImpl implements TransitService {
             TransitRecord transitRecord = getUnfinishedTransitRecord(userId);
             
             // 查询出站站点信息
-            LambdaQueryWrapper<Site> siteQueryWrapper = Wrappers.<Site>lambdaQuery()
-                    .eq(Site::getSiteName, requestDto.getExitStation());
-            Site exitSite = siteMapper.selectOne(siteQueryWrapper);
+            Site exitSite = getSiteByName(requestDto.getExitStation());
             
             if (exitSite == null) {
                 return Result.instance(ResultEnum.FAILED.getCode(), "出站站点不存在", null);
@@ -178,13 +174,6 @@ public class TransitServiceImpl implements TransitService {
                 return Result.instance(ResultEnum.FAILED.getCode(), "出站时间格式不正确，请使用yyyy-MM-dd HH:mm:ss格式", null);
             }
             
-            // 调试：数据库中的入站记录时间
-            System.out.println("DEBUG - 数据库中的入站时间: " + transitRecord.getEntryTime());
-            System.out.println("DEBUG - 请求的出站时间: " + exitTime);
-            System.out.println("DEBUG - 时间比较结果: exitTime.isBefore(entryTime) = " + exitTime.isBefore(transitRecord.getEntryTime()));
-            System.out.println("DEBUG - 系统时区: " + java.time.ZoneId.systemDefault());
-            System.out.println("DEBUG - 当前系统时间: " + java.time.LocalDateTime.now());
-            
             // 构建响应对象
             TransitExitResponseVo responseVo = new TransitExitResponseVo();
             responseVo.setMode(requestDto.getMode());
@@ -194,8 +183,15 @@ public class TransitServiceImpl implements TransitService {
                 responseVo.setTransitId("UNKNOWN");
                 responseVo.setStatus(2); // 出行异常
                 responseVo.setReason("没有找到未完成的出行记录");
-                return Result.instance(ResultEnum.FAILED.getCode(), "出站失败", responseVo);
+                return Result.instance(ResultEnum.FAILED.getCode(), "出站失败：没有找到未完成的出行记录", responseVo);
             }
+            
+            // 调试：数据库中的入站记录时间
+            System.out.println("DEBUG - 数据库中的入站时间: " + transitRecord.getEntryTime());
+            System.out.println("DEBUG - 请求的出站时间: " + exitTime);
+            System.out.println("DEBUG - 时间比较结果: exitTime.isBefore(entryTime) = " + exitTime.isBefore(transitRecord.getEntryTime()));
+            System.out.println("DEBUG - 系统时区: " + java.time.ZoneId.systemDefault());
+            System.out.println("DEBUG - 当前系统时间: " + java.time.LocalDateTime.now());
             
             // 检查出行方式是否匹配
             if (!transitRecord.getMode().equals(requestDto.getMode())) {
@@ -206,7 +202,7 @@ public class TransitServiceImpl implements TransitService {
                 // 更新记录状态
                 transitRecord.setStatus(2); // 异常状态
                 transitRecord.setReason("出行方式不匹配");
-                transitRecordMapper.updateById(transitRecord);
+                updateTransactionRecord(transitRecord);
                 
                 return Result.instance(ResultEnum.FAILED.getCode(), "出站失败", responseVo);
             }
@@ -221,7 +217,7 @@ public class TransitServiceImpl implements TransitService {
                 // 更新记录状态
                 transitRecord.setStatus(2); // 异常状态
                 transitRecord.setReason("出站时间早于进站时间");
-                transitRecordMapper.updateById(transitRecord);
+                updateTransactionRecord(transitRecord);
                 
                 return Result.instance(ResultEnum.FAILED.getCode(), "出站失败：出站时间早于进站时间", responseVo);
             }
@@ -236,7 +232,7 @@ public class TransitServiceImpl implements TransitService {
                 // 更新记录状态
                 transitRecord.setStatus(2); // 异常状态
                 transitRecord.setReason("出站时间超过入站时间24小时");
-                transitRecordMapper.updateById(transitRecord);
+                updateTransactionRecord(transitRecord);
                 
                 return Result.instance(ResultEnum.FAILED.getCode(), "出站失败：超过24小时限制", responseVo);
             }
@@ -246,7 +242,7 @@ public class TransitServiceImpl implements TransitService {
             long durationMinutes = duration.toMinutes();
             
             // 获取入站站点
-            Site entrySite = siteMapper.selectById(transitRecord.getEntrySiteId());
+            Site entrySite = getSiteById(transitRecord.getEntrySiteId());
             
             // 计算费用
             LambdaQueryWrapper<SiteFare> fareQueryWrapper = Wrappers.<SiteFare>lambdaQuery()
@@ -273,12 +269,9 @@ public class TransitServiceImpl implements TransitService {
             // 生成交易ID
             String transactionId = "TC" + System.currentTimeMillis() + (int)(Math.random() * 1000);
             
-            // 检查用户余额
-            LambdaQueryWrapper<UserBalance> balanceQueryWrapper = Wrappers.<UserBalance>lambdaQuery()
-                    .eq(UserBalance::getUserId, userId);
-            UserBalance userBalance = userBalanceMapper.selectOne(balanceQueryWrapper);
-            
-            if (userBalance == null || userBalance.getBalance().compareTo(amount) < 0) {
+            // 检查用户余额并扣费 - 通过Feign调用
+            Boolean deductResult = assetsClient.deductBalance(userId, amount, "交通出行费用");
+            if (!deductResult) {
                 // 余额不足
                 responseVo.setTransitId(transitRecord.getTransactionId());
                 responseVo.setStatus(1); // 支付异常
@@ -289,19 +282,15 @@ public class TransitServiceImpl implements TransitService {
                 // 更新记录状态
                 transitRecord.setStatus(1); // 支付异常
                 transitRecord.setReason("余额不足");
-                transitRecordMapper.updateById(transitRecord);
+                updateTransactionRecord(transitRecord);
                 
                 return Result.instance(ResultEnum.FAILED.getCode(), "出站失败：余额不足", responseVo);
             }
             
-            // 扣除用户余额
-            userBalance.setBalance(userBalance.getBalance().subtract(amount));
-            userBalanceMapper.updateById(userBalance);
-            
             // 更新出行记录
             transitRecord.setStatus(0); // 正常状态
             transitRecord.setTransactionId(transactionId);
-            transitRecordMapper.updateById(transitRecord);
+            updateTransactionRecord(transitRecord);
             
             // 构建成功响应
             responseVo.setTransitId(transitRecord.getTransactionId());
@@ -414,7 +403,7 @@ public class TransitServiceImpl implements TransitService {
             }
             
             // 查询入站站点
-            Site entrySite = siteMapper.selectById(record.getEntrySiteId());
+            Site entrySite = getSiteById(record.getEntrySiteId());
             if (entrySite == null) {
                 return Result.instance(ResultEnum.FAILED.getCode(), "站点信息不存在", null);
             }
@@ -426,18 +415,18 @@ public class TransitServiceImpl implements TransitService {
                     .userId(record.getUserId())
                     .entrySiteId(record.getEntrySiteId())
                     .entrySiteName(entrySite.getSiteName())
-                    .entrySiteLine(entrySite.getLine())
+                    .entrySiteLine(entrySite.getLineName())
                     .entryTime(record.getEntryTime())
                     .status(record.getStatus())
                     .build();
             
             // 如果已出站，添加出站信息
             if (record.getExitSiteId() != null) {
-                Site exitSite = siteMapper.selectById(record.getExitSiteId());
+                Site exitSite = getSiteById(record.getExitSiteId());
                 if (exitSite != null) {
                     detailVo.setExitSiteId(record.getExitSiteId());
                     detailVo.setExitSiteName(exitSite.getSiteName());
-                    detailVo.setExitSiteLine(exitSite.getLine());
+                    detailVo.setExitSiteLine(exitSite.getLineName());
                 }
                 
                 detailVo.setExitTime(record.getExitTime());
@@ -507,23 +496,16 @@ public class TransitServiceImpl implements TransitService {
                 return Result.instance(ResultEnum.FAILED.getCode(), "支付时间格式不正确，请使用yyyy-MM-dd HH:mm:ss格式", null);
             }
             
-            // 检查用户余额
-            LambdaQueryWrapper<UserBalance> balanceQueryWrapper = Wrappers.<UserBalance>lambdaQuery()
-                    .eq(UserBalance::getUserId, userId);
-            UserBalance userBalance = userBalanceMapper.selectOne(balanceQueryWrapper);
-            
-            if (userBalance == null || userBalance.getBalance().compareTo(amount) < 0) {
+            // 检查用户余额并扣费 - 通过Feign调用
+            Boolean deductResult = assetsClient.deductBalance(userId, amount, "交通出行补缴");
+            if (!deductResult) {
                 return Result.instance(ResultEnum.FAILED.getCode(), "余额不足，无法补缴", null);
             }
-            
-            // 扣除用户余额
-            userBalance.setBalance(userBalance.getBalance().subtract(amount));
-            userBalanceMapper.updateById(userBalance);
             
             // 更新出行记录状态
             record.setStatus(0); // 更新为正常状态
             record.setReason(null); // 清除异常原因
-            transitRecordMapper.updateById(record);
+            updateTransactionRecord(record);
             
             // 构建响应
             TransitRepayResponseVo responseVo = TransitRepayResponseVo.builder()
@@ -561,8 +543,8 @@ public class TransitServiceImpl implements TransitService {
                 queryWrapper.eq(Site::getType, type);
             }
             
-            // Query sites from database
-            List<Site> sites = siteMapper.selectList(queryWrapper);
+            // Query sites from admin service
+            List<Site> sites = getSitesByCity(city, type);
             
             // Convert entities to view objects
             List<SiteVo> siteVos = sites.stream()
@@ -572,7 +554,7 @@ public class TransitServiceImpl implements TransitService {
                             .siteName(site.getSiteName())
                             .city(site.getCity())
                             .cityCode(site.getCityCode())
-                            .line(site.getLine())
+                            .line(site.getLineName())
                             .longitude(site.getLongitude())
                             .latitude(site.getLatitude())
                             .address(site.getAddress())
@@ -617,12 +599,13 @@ public class TransitServiceImpl implements TransitService {
         BigDecimal baseFare = new BigDecimal("2.00");
         
         // 获取站点信息
-        Site entrySite = siteMapper.selectById(entrySiteId);
-        Site exitSite = siteMapper.selectById(exitSiteId);
+        Site entrySite = getSiteById(entrySiteId);
+        Site exitSite = getSiteById(exitSiteId);
         
         if (entrySite != null && exitSite != null) {
-            // 如果是同一条线路
-            if (entrySite.getLine().equals(exitSite.getLine())) {
+            // 如果是同一条线路（需要检查线路信息是否为空）
+            if (entrySite.getLineName() != null && exitSite.getLineName() != null && 
+                entrySite.getLineName().equals(exitSite.getLineName())) {
                 try {
                     // 使用Long解析站点编号，避免数字超出Integer范围
                     long entryStationCode = Long.parseLong(entrySite.getSiteCode());
@@ -645,5 +628,44 @@ public class TransitServiceImpl implements TransitService {
         // 默认返回基础票价
         return baseFare;
     }
+
+    /**
+     * 通过Feign调用获取站点信息
+     */
+    private Site getSiteById(Long siteId) {
+        if (siteId == null) return null;
+        return adminClient.getSiteById(siteId);
+    }
+
+    /**
+     * 通过Feign调用根据站点名称获取站点信息
+     */
+    private Site getSiteByName(String siteName) {
+        if (siteName == null || siteName.isEmpty()) return null;
+        return adminClient.getSiteByName(siteName);
+    }
+
+    /**
+     * 通过Feign调用获取城市站点列表
+     */
+    private List<Site> getSitesByCity(String city, String type) {
+        return adminClient.getSitesByCity(city, type);
+    }
+
+    /**
+     * 保存出行记录到本地数据库
+     */
+    private void saveTransactionRecord(TransitRecord record) {
+        transitRecordMapper.insert(record);
+    }
+
+    /**
+     * 更新出行记录到本地数据库
+     */
+    private void updateTransactionRecord(TransitRecord record) {
+        transitRecordMapper.updateById(record);
+    }
+
+
 
 } 

@@ -45,7 +45,7 @@ public class Site implements Serializable {
      * 所属线路
      */
     @TableField("line_name")
-    private String line;
+    private String lineName;
 
     /**
      * 经度

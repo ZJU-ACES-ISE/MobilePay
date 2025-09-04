@@ -1,17 +1,20 @@
 package org.software.code.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import org.software.code.common.result.Result;
 import org.software.code.dto.PasswordUpdateDto;
 import org.software.code.dto.ResetPasswordDto;
 import org.software.code.dto.UserProfileUpdateDto;
+import org.software.code.entity.User;
 import org.software.code.vo.UserRegisterVo;
 import org.software.code.vo.UserVo;
 import org.software.code.vo.UserLoginVo;
 
+
 /**
  * 用户服务接口
  */
-public interface UserService {
+public interface UserService extends IService<User> {
     /**
      * 查询个人信息
      * @param token 用户token
@@ -83,4 +86,6 @@ public interface UserService {
      * @return 重置结果
      */
     Result<?> resetPassword(ResetPasswordDto request);
+
+
 } 
