@@ -127,21 +127,19 @@ public class PaymentServiceImpl implements PaymentService {
             Long userId = getLongValue(qrCodeData, "userId");
             
             // 解析金额信息，如果存在
-            Integer amount = 0;
+            Double amount = 0.0;
             if (qrCodeData.containsKey("amount")) {
                 String amountStr = qrCodeData.get("amount").toString();
                 try {
-                    // 假设金额以元为单位，需要转换为分
-                    double amountValue = Double.parseDouble(amountStr);
-                    amount = (int)(amountValue * 100);
+                    amount = Double.parseDouble(amountStr);
                 } catch (NumberFormatException e) {
                     // 如果解析失败，使用默认值0
                 }
             }
             
             // 计算折扣和实际金额（这里简单示例，实际可能需要调用其他服务计算）
-            Integer discount = calculateDiscount(targetId, amount);
-            Integer actualAmount = amount - discount;
+            Double discount = calculateDiscount(targetId, amount);
+            Double actualAmount = amount - discount;
             
             // 构建返回结果
             QRCodeParseResultVo resultVo = QRCodeParseResultVo.builder()
@@ -240,10 +238,10 @@ public class PaymentServiceImpl implements PaymentService {
     /**
      * 计算折扣（示例方法，实际可能需要调用优惠券服务等）
      */
-    private Integer calculateDiscount(Long targetId, Integer amount) {
+    private Double calculateDiscount(Long targetId, Double amount) {
         // 这里只是示例，实际应该根据用户、商家、活动等信息计算折扣
         // 假设有10%的折扣
-        return amount / 10;
+        return amount * 0.1;
     }
     
     @Override
