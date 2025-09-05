@@ -23,13 +23,16 @@ public class AssetsController {
      * 银行卡充值接口
      *
      * @param bankTransferDto 充值银行卡请求数据
+     * @param uid Header中的uid
      * @return 操作结果
      */
     @Operation(summary = "用户余额充值", description = "输入金额并提交转入请求，校验支付密码和银行卡余额")
     @PostMapping("/topup")
     public Result<?> topUp(
-            @RequestBody @Validated BankTransferDto bankTransferDto) {
-        assetsService.topUp(bankTransferDto);
+            @RequestBody @Validated BankTransferDto bankTransferDto,
+            @Parameter(description = "Bearer 类型 Token携带的uid", required = true)
+            @RequestHeader("X-User-Id") Long uid) {
+        assetsService.topUp(bankTransferDto, uid);
         return Result.success("余额充值成功", null);
     }
 
@@ -37,12 +40,16 @@ public class AssetsController {
      * 银行卡提现接口
      *
      * @param bankTransferDto 提现银行卡请求数据
+     * @param uid Header中的uid
      * @return 操作结果
      */
     @PostMapping("/withdraw")
     @Operation(summary = "用户余额提现", description = "输入金额并提交转入请求，校验支付密码和用户余额")
-    public Result<?> withdraw(@RequestBody @Validated BankTransferDto bankTransferDto) {
-        assetsService.withdraw(bankTransferDto);
+    public Result<?> withdraw(
+            @RequestBody @Validated BankTransferDto bankTransferDto,
+            @Parameter(description = "Bearer 类型 Token携带的uid", required = true)
+            @RequestHeader("X-User-Id") Long uid) {
+        assetsService.withdraw(bankTransferDto, uid);
         return Result.success("余额提现成功", null);
     }
 
