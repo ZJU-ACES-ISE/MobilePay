@@ -1,5 +1,6 @@
 package org.software.code.service.impl;
 
+import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -40,6 +41,7 @@ import java.util.stream.Collectors;
  * @author "101"计划《软件工程》实践教材案例团队
  */
 @Service
+@DS("paymentdb")
 public class SiteServiceImpl extends ServiceImpl<SiteMapper, Site> implements SiteService {
     private static final Logger logger = LoggerFactory.getLogger(SiteServiceImpl.class);
 

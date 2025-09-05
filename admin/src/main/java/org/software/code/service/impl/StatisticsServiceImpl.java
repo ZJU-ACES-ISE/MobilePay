@@ -1,6 +1,7 @@
 package org.software.code.service.impl;
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,6 +105,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
     @Override
+    @DS("paymentdb")
     public DeviceStatisticsVo getDeviceStatistics(String startDate, String endDate, String city, Long siteId) {
         logger.info("查询设备统计数据，开始日期：{}，结束日期：{}，城市：{}，站点ID：{}", startDate, endDate, city, siteId);
         
@@ -159,6 +161,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
     @Override
+    @DS("paymentdb")
     public DiscountStatisticsVo getDiscountStatistics(String startDate, String endDate, String strategyType) {
         logger.info("查询折扣策略统计数据，开始日期：{}，结束日期：{}，策略类型：{}", startDate, endDate, strategyType);
         

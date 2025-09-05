@@ -108,7 +108,7 @@ public class TurnstileDeviceController {
     @AdminRole("SUPER_ADMIN")
     public Result<?> updateDevice(
             @Parameter(description = "设备ID") @PathVariable @NotNull Long deviceId,
-            @Parameter(description = "设备更新信息") @RequestBody @Valid DeviceUpdateDto updateDto,
+            @Parameter(description = "设备更新信息") @RequestBody DeviceUpdateDto updateDto,
             @RequestHeader("X-User-Id") String adminId,
             @RequestHeader("X-User-Role") String adminRole) {
         
