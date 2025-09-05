@@ -3,26 +3,26 @@ package org.software.code.service;
 import org.software.code.common.result.Result;
 import org.software.code.dto.BankTransferDto;
 import org.software.code.entity.BankCard;
-import org.software.code.entity.TransferRecord;
 import org.software.code.vo.BalanceSummaryVo;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 
 public interface AssetsService {
     /**
      * 余额充值，使用银行卡
      *
      * @param bankTransferDto 充值请求数据
+     * @param uid 用户id
      */
-    void topUp(BankTransferDto bankTransferDto);
+    void topUp(BankTransferDto bankTransferDto, Long uid);
 
     /**
      * 余额提现，使用银行卡
      *
      * @param bankTransferDto 充值请求数据
+     * @param uid 用户id
      */
-    void withdraw(BankTransferDto bankTransferDto);
+    void withdraw(BankTransferDto bankTransferDto, Long uid);
 
     /**
      * 总资产展示

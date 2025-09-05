@@ -63,8 +63,8 @@ public enum ExceptionEnum {
     BANK_TRANSFER_FAILED("40011", "银行转账失败"),
     /** 请求参数不合法 */
     INVALID_REQUEST_PARAMETER("40012", "请求参数不合法"),
-
-    ;
+    /** 银行卡不属于该用户 */
+    BANK_CARD_NOT_CORRECT("40013", "银行卡不属于该用户" );
 
     // 错误码
     private String code;
