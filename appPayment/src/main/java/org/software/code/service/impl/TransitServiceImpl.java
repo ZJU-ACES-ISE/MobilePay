@@ -2,8 +2,6 @@ package org.software.code.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import org.software.code.common.except.BusinessException;
-import org.software.code.common.except.ExceptionEnum;
 import org.software.code.common.result.Result;
 import org.software.code.common.result.ResultEnum;
 import org.software.code.common.util.JwtUtil;
@@ -14,7 +12,8 @@ import org.software.code.mapper.SiteFareMapper;
 import org.software.code.mapper.TransitRecordMapper;
 import org.software.code.client.UserClient;
 import org.software.code.client.AssetsClient;
-import org.software.code.client.AdminClient;
+import org.software.code.mapper.SiteMapper;
+import org.software.code.mapper.TurnstileDeviceMapper;
 import java.util.stream.Collectors;
 import java.util.ArrayList;
 import org.software.code.service.TransitService;
@@ -50,7 +49,10 @@ import java.text.ParseException;
 public class TransitServiceImpl implements TransitService {
     
     @Autowired
-    private AdminClient adminClient;
+    private SiteMapper siteMapper;
+    
+    @Autowired
+    private TurnstileDeviceMapper turnstileDeviceMapper;
     
     @Autowired
     private SiteFareMapper siteFareMapper;
@@ -91,7 +93,7 @@ public class TransitServiceImpl implements TransitService {
                 );
                 
                 // 返回详细的错误信息
-                return Result.instance(Integer.parseInt(ExceptionEnum.TRANSIT_CARD_NOT_FOUND.getCode()), errorMessage, null);
+                return Result.instance(ResultEnum.FAILED.getCode(), errorMessage, null);
             }
             
             // 查询站点信息
@@ -100,7 +102,7 @@ public class TransitServiceImpl implements TransitService {
             Site entrySite = getSiteByName(requestDto.getEntryStation());
             
             if (entrySite == null) {
-                return Result.instance(Integer.parseInt(ExceptionEnum.STATION_NOT_FOUND.getCode()), ExceptionEnum.STATION_NOT_FOUND.getMsg(), null);
+                return Result.instance(ResultEnum.FAILED.getCode(), "入站站点不存在", null);
             }
             
             // 解析入站时间 - 保持原始时间
@@ -286,7 +288,7 @@ public class TransitServiceImpl implements TransitService {
                 transitRecord.setReason("余额不足");
                 updateTransactionRecord(transitRecord);
                 
-                return Result.instance(Integer.parseInt(ExceptionEnum.TRANSIT_CARD_INSUFFICIENT_BALANCE.getCode()), "出站失败：余额不足", responseVo);
+                return Result.instance(ResultEnum.FAILED.getCode(), "出站失败：余额不足", responseVo);
             }
             
             // 更新出行记录
@@ -305,7 +307,7 @@ public class TransitServiceImpl implements TransitService {
             
         } catch (Exception e) {
             e.printStackTrace();
-            return Result.instance(Integer.parseInt(ExceptionEnum.RUN_EXCEPTION.getCode()), ExceptionEnum.RUN_EXCEPTION.getMsg(), null);
+            return Result.instance(ResultEnum.FAILED.getCode(), "服务器内部错误", null);
         }
     }
     
@@ -571,8 +573,8 @@ public class TransitServiceImpl implements TransitService {
                             .city(site.getCity())
                             .cityCode(site.getCityCode())
                             .line(site.getLineName())
-                            .longitude(site.getLongitude())
-                            .latitude(site.getLatitude())
+                            .longitude(site.getLongitude() != null ? site.getLongitude().doubleValue() : null)
+                            .latitude(site.getLatitude() != null ? site.getLatitude().doubleValue() : null)
                             .address(site.getAddress())
                             .type(site.getType())
                             .build())
@@ -646,26 +648,44 @@ public class TransitServiceImpl implements TransitService {
     }
 
     /**
-     * 通过Feign调用获取站点信息
+     * 通过Mapper直接获取站点信息
      */
     private Site getSiteById(Long siteId) {
         if (siteId == null) return null;
-        return adminClient.getSiteById(siteId);
+        return siteMapper.selectById(siteId);
     }
 
     /**
-     * 通过Feign调用根据站点名称获取站点信息
+     * 通过Mapper根据站点名称获取站点信息
      */
     private Site getSiteByName(String siteName) {
         if (siteName == null || siteName.isEmpty()) return null;
-        return adminClient.getSiteByName(siteName);
+        LambdaQueryWrapper<Site> queryWrapper = Wrappers.<Site>lambdaQuery()
+                .eq(Site::getSiteName, siteName);
+        return siteMapper.selectOne(queryWrapper);
     }
 
     /**
-     * 通过Feign调用获取城市站点列表
+     * 通过Mapper获取城市站点列表
      */
     private List<Site> getSitesByCity(String city, String type) {
-        return adminClient.getSitesByCity(city, type);
+        LambdaQueryWrapper<Site> queryWrapper = Wrappers.<Site>lambdaQuery()
+                .eq(Site::getCity, city)
+                .eq(Site::getStatus, "ACTIVE");
+
+        if (type != null && !type.isEmpty()) {
+            queryWrapper.eq(Site::getType, type);
+        }
+
+        return siteMapper.selectList(queryWrapper);
+    }
+
+    /**
+     * 通过Mapper获取闸机设备信息
+     */
+    private TurnstileDevice getTurnstileDevice(Long deviceId) {
+        if (deviceId == null) return null;
+        return turnstileDeviceMapper.selectById(deviceId);
     }
 
     /**

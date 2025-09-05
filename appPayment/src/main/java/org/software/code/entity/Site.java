@@ -1,86 +1,69 @@
 package org.software.code.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
-import lombok.Data;
-
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 /**
- * 站点实体类
+ * <p>
+ * 
+ * </p>
+ *
+ * @author "101"计划《软件工程》实践教材案例团队
+ * @since 2025-07-31
  */
-@Data
+@Getter
+@Setter
+@Accessors(chain = true)
 @TableName("site")
 public class Site implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 主键ID
-     */
-    @TableId(type = IdType.AUTO)
+    @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    /**
-     * 站点编号
-     */
+    @TableField("site_code")
     private String siteCode;
 
-    /**
-     * 站点名称
-     */
+    @TableField("site_name")
     private String siteName;
 
-    /**
-     * 所在城市
-     */
+    @TableField("city")
     private String city;
 
-    /**
-     * 城市编码
-     */
+    @TableField("city_code")
     private String cityCode;
 
-    /**
-     * 所属线路
-     */
     @TableField("line_name")
     private String lineName;
 
-    /**
-     * 经度
-     */
-    private Double longitude;
+    @TableField("longitude")
+    private BigDecimal longitude;
 
-    /**
-     * 纬度
-     */
-    private Double latitude;
-    
-    /**
-     * 地址
-     */
+    @TableField("latitude")
+    private BigDecimal latitude;
+
+    @TableField("address")
     private String address;
 
-    /**
-     * 站点类型（SUBWAY地铁站，BUS公交站）
-     */
+    @TableField("type")
     private String type;
 
-    /**
-     * 状态（ACTIVE正常，INACTIVE停用）
-     */
+    @TableField("status")
     private String status;
 
-    /**
-     * 创建时间
-     */
-    @TableField(fill = FieldFill.INSERT)
+    @TableField("created_time")
     private LocalDateTime createdTime;
 
-    /**
-     * 更新时间
-     */
-    @TableField(fill = FieldFill.INSERT_UPDATE)
+    @TableField("updated_time")
     private LocalDateTime updatedTime;
+
 } 
