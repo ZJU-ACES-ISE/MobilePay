@@ -205,7 +205,7 @@ public class SiteController {
     @AdminRole()
     public Result<?> updateSite(
             @Parameter(description = "站点ID") @PathVariable @NotNull Long id,
-            @Parameter(description = "站点信息") @RequestBody @Valid SiteUpdateDto updateDto,
+            @Parameter(description = "站点信息") @RequestBody SiteUpdateDto updateDto,
             @RequestHeader("X-User-Id") String adminId) {
         
         logger.info("管理员更新站点信息，管理员ID：{}，站点ID：{}", adminId, id);
