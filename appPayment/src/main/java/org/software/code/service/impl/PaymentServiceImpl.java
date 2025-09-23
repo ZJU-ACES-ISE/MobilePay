@@ -1,45 +1,42 @@
 package org.software.code.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.zxing.*;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.software.code.common.result.Result;
 import org.software.code.common.result.ResultEnum;
 import org.software.code.common.util.JwtUtil;
 import org.software.code.common.util.OSSUtil;
 import org.software.code.dto.PaymentConfirmDto;
 import org.software.code.dto.QRCodeParseDto;
-import org.software.code.entity.UserBalance;
-import org.software.code.entity.TransactionRecord;
 import org.software.code.entity.ReceiptTransaction;
+import org.software.code.entity.DiscountStrategy;
 import org.software.code.mapper.ReceiptTransactionMapper;
-import org.software.code.mapper.UserBalanceMapper;
-import org.software.code.mapper.TransactionRecordMapper;
-import org.software.code.mapper.UserMapper;
+import org.software.code.client.UserClient;
+import org.software.code.client.AssetsClient;
 import org.software.code.service.PaymentService;
+import org.software.code.service.DiscountService;
 import org.software.code.vo.PaymentConfirmVo;
 import org.software.code.vo.QRCodeParseResultVo;
+import org.software.code.vo.OrderContext;
+import org.software.code.common.constants.DiscountConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+
 import java.math.BigDecimal;
 import java.net.URL;
-import java.net.HttpURLConnection;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import org.software.code.entity.User;
 
 /**
  * 支付服务实现类
@@ -47,22 +44,22 @@ import org.software.code.entity.User;
 @Service
 public class PaymentServiceImpl implements PaymentService {
 
+    private static final Logger logger = LoggerFactory.getLogger(PaymentServiceImpl.class);
 
+    @Autowired
+    private UserClient userClient;
     
     @Autowired
-    private UserBalanceMapper userBalanceMapper;
+    private AssetsClient assetsClient;
     
     @Autowired
     private OSSUtil ossUtil;
-    
-    @Autowired
-    private TransactionRecordMapper transactionRecordMapper;
-    
-    @Autowired
-    private UserMapper userMapper;
 
     @Autowired
     private ReceiptTransactionMapper receiptTransactionMapper;
+    
+    @Autowired
+    private DiscountService discountService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -140,21 +137,20 @@ public class PaymentServiceImpl implements PaymentService {
             Long userId = getLongValue(qrCodeData, "userId");
             
             // 解析金额信息，如果存在
-            Integer amount = 0;
+            Double amount = 0.0;
             if (qrCodeData.containsKey("amount")) {
                 String amountStr = qrCodeData.get("amount").toString();
                 try {
-                    // 假设金额以元为单位，需要转换为分
-                    double amountValue = Double.parseDouble(amountStr);
-                    amount = (int)(amountValue * 100);
+                    amount = Double.parseDouble(amountStr);
                 } catch (NumberFormatException e) {
                     // 如果解析失败，使用默认值0
                 }
             }
             
-            // 计算折扣和实际金额（这里简单示例，实际可能需要调用其他服务计算）
-            Integer discount = calculateDiscount(targetId, amount);
-            Integer actualAmount = amount - discount;
+            // 计算折扣和实际金额
+            BigDecimal originalAmount = BigDecimal.valueOf(amount);
+            BigDecimal discount = calculateDiscount(targetId, originalAmount, userId, null);
+            BigDecimal actualAmount = originalAmount.subtract(discount);
             
             // 构建返回结果
             QRCodeParseResultVo resultVo = QRCodeParseResultVo.builder()
@@ -164,8 +160,8 @@ public class PaymentServiceImpl implements PaymentService {
                     .bizCategory(bizCategory)
                     .userId(userId)
                     .amount(amount)
-                    .discount(discount)
-                    .actualAmount(actualAmount)
+                    .discount(discount.doubleValue())
+                    .actualAmount(actualAmount.doubleValue())
                     .build();
             
             return Result.success("识别成功", resultVo);
@@ -251,12 +247,57 @@ public class PaymentServiceImpl implements PaymentService {
     }
     
     /**
-     * 计算折扣（示例方法，实际可能需要调用优惠券服务等）
+     * 计算折扣金额
+     * 
+     * @param targetId 目标ID
+     * @param originalAmount 原始金额
+     * @param userId 用户ID
+     * @param discountStrategyId 指定的折扣策略ID（可选）
+     * @return 折扣金额
      */
-    private Integer calculateDiscount(Long targetId, Integer amount) {
-        // 这里只是示例，实际应该根据用户、商家、活动等信息计算折扣
-        // 假设有10%的折扣
-        return amount / 10;
+    private BigDecimal calculateDiscount(Long targetId, BigDecimal originalAmount, Long userId, Long discountStrategyId) {
+        try {
+            DiscountStrategy strategy = null;
+            
+            // 如果指定了折扣策略ID，优先使用指定的策略
+            if (discountStrategyId != null) {
+                strategy = discountService.getStrategyById(discountStrategyId);
+                if (strategy == null) {
+                    logger.warn("指定的折扣策略不存在或无效，策略ID：{}，用户ID：{}", discountStrategyId, userId);
+                }
+            }
+            
+            // 如果没有指定策略或指定的策略无效，则获取默认的支付类型策略
+            if (strategy == null) {
+                strategy = discountService.getBestStrategy(DiscountConstants.StrategyType.PAYMENT, userId, null);
+            }
+            
+            if (strategy == null) {
+                logger.info("未找到可用的折扣策略，用户ID：{}，目标ID：{}", userId, targetId);
+                return BigDecimal.ZERO;
+            }
+            
+            // 构建订单上下文
+            OrderContext context = OrderContext.builder()
+                    .userId(userId)
+                    .targetId(targetId)
+                    .originalAmount(originalAmount)
+                    .transactionTime(LocalDateTime.now())
+                    .discountStrategy(strategy)
+                    .build();
+            
+            // 计算折扣
+            BigDecimal discount = discountService.calculateDiscount(originalAmount, context);
+            
+            logger.info("折扣计算完成，用户ID：{}，原始金额：{}，折扣金额：{}，策略ID：{}", 
+                       userId, originalAmount, discount, strategy.getId());
+            
+            return discount;
+            
+        } catch (Exception e) {
+            logger.error("计算折扣时发生错误，用户ID：{}，目标ID：{}，错误：{}", userId, targetId, e.getMessage(), e);
+            return BigDecimal.ZERO;
+        }
     }
     
     @Override
@@ -273,68 +314,83 @@ public class PaymentServiceImpl implements PaymentService {
             }
             
             // 解析金额
-            BigDecimal amount;
+            BigDecimal originalAmount;
             try {
-                amount = new BigDecimal(paymentConfirmDto.getActualAmount());
-                if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+                originalAmount = new BigDecimal(paymentConfirmDto.getActualAmount());
+                if (originalAmount.compareTo(BigDecimal.ZERO) <= 0) {
                     return Result.instance(ResultEnum.FAILED.getCode(), "金额必须大于0", null);
                 }
             } catch (NumberFormatException e) {
                 return Result.instance(ResultEnum.FAILED.getCode(), "金额格式不正确", null);
             }
             
-            // 生成交易流水号
-            String transactionId = generateTransactionId();
+            // 计算折扣（仅对支出交易应用折扣）
+            BigDecimal discount = BigDecimal.ZERO;
+            BigDecimal actualAmount = originalAmount;
             
-            // 从数据库获取用户余额
-            QueryWrapper<UserBalance> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("user_id", userId);
-            UserBalance userBalance = userBalanceMapper.selectOne(queryWrapper);
-            
-            if (userBalance == null) {
-                return Result.instance(ResultEnum.FAILED.getCode(), "用户余额信息不存在", null);
-            }
-            
-            BigDecimal balance = userBalance.getBalance();
-            
-            // 计算交易后余额
-            BigDecimal balanceAfter;
-            if (paymentConfirmDto.getType() == 1) {
-                // 收入
-                balanceAfter = balance.add(amount);
-            } else {
-                // 支出
-                balanceAfter = balance.subtract(amount);
-                if (balanceAfter.compareTo(BigDecimal.ZERO) < 0) {
-                    return Result.instance(ResultEnum.FAILED.getCode(), "余额不足", null);
+            if (paymentConfirmDto.getType() == 2) { // 支出交易
+                discount = calculateDiscount(
+                    paymentConfirmDto.getTargetId(), 
+                    originalAmount, 
+                    userId, 
+                    paymentConfirmDto.getDiscountStrategyId()
+                );
+                actualAmount = originalAmount.subtract(discount);
+                
+                // 确保实际金额不为负数
+                if (actualAmount.compareTo(BigDecimal.ZERO) < 0) {
+                    actualAmount = BigDecimal.ZERO;
                 }
             }
             
-            // 更新用户余额
-            userBalance.setBalance(balanceAfter);
-            userBalance.setUpdateTime(LocalDateTime.now());
-            userBalanceMapper.updateById(userBalance);
+            // 生成交易流水号
+            String transactionId = generateTransactionId();
             
-            // 获取用户信息
-            User user = userMapper.selectById(userId);
-            String userName = (user != null && user.getNickname() != null) ? user.getNickname() : "用户" + userId;
+            // 通过Feign调用获取用户余额
+            BigDecimal balanceResult = assetsClient.getUserBalance(userId);
+            if (balanceResult == null) {
+                return Result.instance(ResultEnum.FAILED.getCode(), "用户余额信息不存在", null);
+            }
             
-            // 保存交易记录到数据库
-            TransactionRecord transactionRecord = TransactionRecord.builder()
-                    .transferNumber(transactionId)
-                    .userId(userId)
-                    .userName(userName)
-                    .type(paymentConfirmDto.getType())
-                    .targetId(paymentConfirmDto.getTargetId())
-                    .targetType(paymentConfirmDto.getTargetType())
-                    .targetName(paymentConfirmDto.getTargetName())
-                    .bizCategory(paymentConfirmDto.getBizCategory())
-                    .amount(amount)
-                    .completeTime(LocalDateTime.now())
-                    .remark("支付确认")
-                    .build();
+            // 根据交易类型处理余额
+            BigDecimal balanceAfter;
+            if (paymentConfirmDto.getType() == 1) {
+                // 收入 - 通过Feign调用增加余额（收入不应用折扣）
+                Boolean addResult = assetsClient.addBalance(userId, originalAmount, "支付收入");
+                if (!addResult) {
+                    return Result.instance(ResultEnum.FAILED.getCode(), "余额更新失败", null);
+                }
+            } else {
+                // 支出 - 通过Feign调用扣减余额（使用折扣后的实际金额）
+                Boolean deductResult = assetsClient.deductBalance(userId, actualAmount, "支付支出");
+                if (!deductResult) {
+                    return Result.instance(ResultEnum.FAILED.getCode(), "余额不足或扣减失败", null);
+                }
+            }
             
-            transactionRecordMapper.insert(transactionRecord);
+            // 重新获取更新后的余额
+            BigDecimal updatedBalanceResult = assetsClient.getUserBalance(userId);
+            balanceAfter = updatedBalanceResult != null ? updatedBalanceResult : BigDecimal.ZERO;
+            
+            // 通过Feign调用获取用户昵称
+            String userName = userClient.getUserNickname(userId);
+            userName = userName != null ? userName : "用户" + userId;
+            
+            // 通过Feign调用创建交易记录
+            Map<String, Object> transactionRecord = new HashMap<>();
+            transactionRecord.put("transferNumber", transactionId);
+            transactionRecord.put("userId", userId);
+            transactionRecord.put("userName", userName);
+            transactionRecord.put("type", paymentConfirmDto.getType());
+            transactionRecord.put("targetId", paymentConfirmDto.getTargetId());
+            transactionRecord.put("targetType", paymentConfirmDto.getTargetType());
+            transactionRecord.put("targetName", paymentConfirmDto.getTargetName());
+            transactionRecord.put("bizCategory", paymentConfirmDto.getBizCategory());
+            transactionRecord.put("amount", actualAmount);
+            transactionRecord.put("completeTime", LocalDateTime.now());
+            transactionRecord.put("remark", "支付确认");
+            
+            assetsClient.createTransactionRecord(transactionRecord);
             
             // 生成交易完成时间
             LocalDateTime completeTime = LocalDateTime.now();
@@ -346,7 +402,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .payerId(userId)
                 .receiverId(paymentConfirmDto.getTargetId())
                 .receiverName(paymentConfirmDto.getTargetName())
-                .amount(amount)
+                .amount(actualAmount)
                 .timestamp(completeTime)
                 .createTime(completeTime)
                 .build();
@@ -356,7 +412,7 @@ public class PaymentServiceImpl implements PaymentService {
             PaymentConfirmVo confirmVo = PaymentConfirmVo.builder()
                     .transactionId(transactionId)
                     .balanceAfter(balanceAfter.toString())
-                    .amount(amount.toString())
+                    .amount(actualAmount.toString())
                     .type(paymentConfirmDto.getType())
                     .bizCategory(paymentConfirmDto.getBizCategory())
                     .targetId(paymentConfirmDto.getTargetId())

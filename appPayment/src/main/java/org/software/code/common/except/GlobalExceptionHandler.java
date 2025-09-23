@@ -7,6 +7,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
@@ -69,6 +70,20 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Result<?>> handleMHttpMessageNotReadableException(HttpMessageNotReadableException e) {
         Result<?> result = Result.failed(REQUEST_PARAMETER_ERROR.getMsg());
         return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * 处理不支持的媒体类型异常，如发送XML格式但服务只支持JSON。
+     * @param e HttpMediaTypeNotSupportedException 异常对象
+     * @return 包含错误信息的响应实体
+     */
+    @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<Result<?>> handleHttpMediaTypeNotSupportedException(HttpMediaTypeNotSupportedException e) {
+        String supportedTypes = e.getSupportedMediaTypes().toString();
+        String errorMessage = String.format("不支持的媒体类型：%s，支持的类型：%s", e.getContentType(), supportedTypes);
+        Result<?> result = Result.failed(errorMessage);
+        return new ResponseEntity<>(result, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
     }
 
     /**

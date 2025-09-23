@@ -34,6 +34,11 @@
             <version>8.0.21</version>
         </dependency>
         <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.23</version>
+        </dependency>
+        <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
             <version>2.2.5.RELEASE</version>
@@ -89,6 +94,11 @@
             <groupId>com.google.zxing</groupId>
             <artifactId>javase</artifactId>
             <version>3.4.1</version>
+        </dependency>
+        <!-- Spring Cloud OpenFeign -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
         </dependency>
         <!-- Swagger       -->
        <dependency>

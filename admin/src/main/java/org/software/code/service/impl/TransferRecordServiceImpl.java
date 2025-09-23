@@ -1,5 +1,6 @@
 package org.software.code.service.impl;
 
+import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
  * @author "101"计划《软件工程》实践教材案例团队
  */
 @Service
+@DS("assetsdb")
 public class TransferRecordServiceImpl extends ServiceImpl<TransferRecordMapper, TransferRecord> implements TransferRecordService {
     private static final Logger logger = LoggerFactory.getLogger(TransferRecordServiceImpl.class);
 

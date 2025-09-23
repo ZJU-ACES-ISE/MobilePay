@@ -22,5 +22,18 @@ public interface TransitRecordMapper extends BaseMapper<TransitRecord> {
      */
     List<Map<String, Object>> selectUserTransitRecordsWithSites(@Param("userId") Long userId, @Param("limit") Integer limit);
     
+    /**
+     * 调试查询：获取数据库时区和时间信息
+     * @return 时区和时间信息
+     */
+    Map<String, Object> getTimeZoneInfo();
+    
+    /**
+     * 调试查询：获取最新的入站记录时间信息
+     * @param userId 用户ID
+     * @return 入站时间信息
+     */
+    Map<String, Object> getLatestEntryTimeInfo(@Param("userId") Long userId);
+    
     // 不需要selectUnfinishedTransitRecords方法，可以使用MyBatis-Plus的QueryWrapper实现
 } 

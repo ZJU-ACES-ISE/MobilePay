@@ -8,7 +8,7 @@ import lombok.Data;
  */
 @Data
 @Schema(description = "密码更新请求")
-public class PasswordUpdateRequest {
+public class PasswordUpdateDto {
     
     /**
      * 旧密码

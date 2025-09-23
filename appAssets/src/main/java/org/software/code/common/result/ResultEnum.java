@@ -12,8 +12,8 @@ public enum ResultEnum implements IResult {
     // 表示操作成功的枚举常量，状态码为 200，消息为 "成功"
     SUCCESS(200, "成功"),
 
-    // 表示操作失败的枚举常量，状态码为 400，消息为 "失败"
-    FAILED(400, "失败");
+    // 表示操作失败的枚举常量，状态码为 500，消息为 "失败"
+    FAILED(500, "失败");
 
     // 结果的状态码，用于标识操作的执行结果
     private Integer code;

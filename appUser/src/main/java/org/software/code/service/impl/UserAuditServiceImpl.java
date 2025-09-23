@@ -3,7 +3,6 @@ package org.software.code.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.software.code.common.result.Result;
 import org.software.code.common.util.JwtUtil;
-import org.software.code.dto.UserAuditSubmitRequest;
 import org.software.code.entity.UserAudit;
 import org.software.code.mapper.UserAuditMapper;
 import org.software.code.mapper.UserMapper;

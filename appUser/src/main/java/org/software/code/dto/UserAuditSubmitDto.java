@@ -12,7 +12,7 @@ import javax.validation.constraints.NotNull;
  */
 @Data
 @Schema(description = "用户资料审核提交请求")
-public class UserAuditSubmitRequest {
+public class UserAuditSubmitDto {
 
     /**
      * 真实姓名

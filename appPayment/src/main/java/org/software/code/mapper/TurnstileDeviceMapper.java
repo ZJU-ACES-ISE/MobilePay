@@ -1,12 +1,17 @@
 package org.software.code.mapper;
 
+import org.software.code.entity.TurnstileDevice;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
-import org.software.code.entity.TurnstileDevice;
 
 /**
- * 闸机设备Mapper接口
+ * <p>
+ *  Mapper 接口
+ * </p>
+ *
+ * @author "101"计划《软件工程》实践教材案例团队
  */
 @Mapper
 public interface TurnstileDeviceMapper extends BaseMapper<TurnstileDevice> {
+
 } 

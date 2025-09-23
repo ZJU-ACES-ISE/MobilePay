@@ -33,30 +33,42 @@ public class BillsServiceImpl implements BillsService {
         if (type == null) {
             return "未知";
         }
-        return switch (type) {
-            case 1 -> "收入";
-            case 2 -> "转出";
-            default -> "未知";
-        };
+        switch (type) {
+            case 1:
+                return "收入";
+            case 2:
+                return "转出";
+            default:
+                return "未知";
+        }
     }
 
     private String getCategoryName(Integer category) {
-        return switch (category) {
-            case 1 -> "餐饮";
-            case 2 -> "出行";
-            case 3 -> "购物";
-            case 4 -> "其他";
-            default -> "未知";
-        };
+        switch (category) {
+            case 1:
+                return "餐饮";
+            case 2:
+                return "出行";
+            case 3:
+                return "购物";
+            case 4:
+                return "其他";
+            default:
+                return "未知";
+        }
     }
 
     private String getTargetTypeName(Integer type) {
-        return switch (type) {
-            case 1 -> "用户";
-            case 2 -> "商户";
-            case 3 -> "银行卡";
-            default -> "未知";
-        };
+        switch (type) {
+            case 1:
+                return "用户";
+            case 2:
+                return "商户";
+            case 3:
+                return "银行卡";
+            default:
+                return "未知";
+        }
     }
 
     @Override

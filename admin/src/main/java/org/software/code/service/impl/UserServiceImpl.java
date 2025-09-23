@@ -1,5 +1,6 @@
 package org.software.code.service.impl;
 
+import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -26,6 +27,7 @@ import org.software.code.mapper.UserBalanceMapper;
 import org.software.code.mapper.UserMapper;
 import org.software.code.mapper.TurnstileDeviceMapper;
 import org.software.code.mapper.UserVerificationMapper;
+import org.software.code.service.UserBalanceService;
 import org.software.code.service.UserService;
 import org.software.code.vo.PendingUserVo;
 import org.software.code.vo.TransitRecordVo;
@@ -33,6 +35,7 @@ import org.software.code.vo.UserDetailVo;
 import org.software.code.vo.UserListVo;
 import org.software.code.vo.UserStatisticsVo;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -57,13 +60,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
     @Resource
+    private UserBalanceService userBalanceService;
+
+    @Resource
     private UserMapper userMapper;
 
     @Resource
     private UserAuditRecordMapper userAuditRecordMapper;
-
-    @Resource
-    private UserBalanceMapper userBalanceMapper;
 
     @Resource
     private UserVerificationMapper userVerificationMapper;
@@ -337,6 +340,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
+    @DS("paymentdb")
     public Page<TransitRecordVo> getUserTravelRecords(Long userId, Integer pageNum, Integer pageSize) {
         logger.info("获取用户出行记录，用户ID：{}，页码：{}，页大小：{}", userId, pageNum, pageSize);
 
@@ -385,10 +389,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             Wrappers.<UserVerification>lambdaQuery().eq(UserVerification::getUserId, user.getId())
         );
         
-        // 查询用户余额信息
-        UserBalance balance = userBalanceMapper.selectOne(
-            Wrappers.<UserBalance>lambdaQuery().eq(UserBalance::getUserId, user.getId())
-        );
+        UserBalance balance = userBalanceService.getBalanceByUser(user.getId());
         
         return UserListVo.builder()
                 .userId(user.getId())
@@ -403,7 +404,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 .updatedTime(user.getUpdateTime())
                 .build();
     }
-
+    @DS("assetsdb")
     private UserDetailVo convertToUserDetailVo(User user) {
         // 查询用户身份验证信息
         UserVerification verification = userVerificationMapper.selectOne(
@@ -411,9 +412,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         );
         
         // 查询用户余额信息
-        UserBalance balance = userBalanceMapper.selectOne(
-            Wrappers.<UserBalance>lambdaQuery().eq(UserBalance::getUserId, user.getId())
-        );
+        UserBalance balance = userBalanceService.getBalanceByUser(user.getId());
         
         return UserDetailVo.builder()
                 .userId(user.getId())
@@ -469,6 +468,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 .build();
     }
 
+    @DS("paymentdb")
     private TransitRecordVo convertToTransitRecordVo(TransitRecord transitRecord) {
         String entrySiteName = null;
         String exitSiteName = null;

@@ -10,13 +10,15 @@ import java.time.LocalDateTime;
 
 /**
  * 出行记录响应VO
+ * 
+ * @author "101"计划《软件工程》实践教材案例团队
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class TransitRecordVo {
-    
+
     /**
      * ID
      */
@@ -26,6 +28,11 @@ public class TransitRecordVo {
      * 用户ID
      */
     private Long userId;
+    
+    /**
+     * 城市
+     */
+    private String city;
     
     /**
      * 交通方式
@@ -48,6 +55,16 @@ public class TransitRecordVo {
     private String entrySiteLine;
     
     /**
+     * 入站设备名称
+     */
+    private String entryDeviceName;
+    
+    /**
+     * 入站时间
+     */
+    private LocalDateTime entryTime;
+    
+    /**
      * 出站站点ID
      */
     private Long exitSiteId;
@@ -63,14 +80,19 @@ public class TransitRecordVo {
     private String exitSiteLine;
     
     /**
-     * 入站时间
+     * 出站设备名称
      */
-    private LocalDateTime entryTime;
+    private String exitDeviceName;
     
     /**
      * 出站时间
      */
     private LocalDateTime exitTime;
+    
+    /**
+     * 行程持续时间（分钟）
+     */
+    private Long durationMinutes;
     
     /**
      * 原始金额
@@ -93,6 +115,11 @@ public class TransitRecordVo {
     private Integer status;
     
     /**
+     * 状态名称
+     */
+    private String statusName;
+    
+    /**
      * 异常原因
      */
     private String reason;
@@ -101,4 +128,14 @@ public class TransitRecordVo {
      * 交易ID
      */
     private String transactionId;
+    
+    /**
+     * 创建时间
+     */
+    private LocalDateTime createdTime;
+    
+    /**
+     * 更新时间
+     */
+    private LocalDateTime updatedTime;
 } 

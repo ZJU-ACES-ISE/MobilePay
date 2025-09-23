@@ -1,17 +1,20 @@
 package org.software.code.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import org.software.code.common.result.Result;
-import org.software.code.dto.PasswordUpdateRequest;
-import org.software.code.dto.ResetPasswordRequest;
-import org.software.code.dto.UserProfileUpdateRequest;
+import org.software.code.dto.PasswordUpdateDto;
+import org.software.code.dto.ResetPasswordDto;
+import org.software.code.dto.UserProfileUpdateDto;
+import org.software.code.entity.User;
 import org.software.code.vo.UserRegisterVo;
 import org.software.code.vo.UserVo;
 import org.software.code.vo.UserLoginVo;
 
+
 /**
  * 用户服务接口
  */
-public interface UserService {
+public interface UserService extends IService<User> {
     /**
      * 查询个人信息
      * @param token 用户token
@@ -44,7 +47,7 @@ public interface UserService {
      * @param request 更新请求
      * @return 更新后的用户信息
      */
-    Result<UserVo> updateUserProfile(String token, UserProfileUpdateRequest request);
+    Result<UserVo> updateUserProfile(String token, UserProfileUpdateDto request);
     
     /**
      * 修改支付密码
@@ -52,7 +55,7 @@ public interface UserService {
      * @param request 支付密码更新请求
      * @return 修改结果
      */
-    Result<?> updatePaymentPassword(String token, PasswordUpdateRequest request);
+    Result<?> updatePaymentPassword(String token, PasswordUpdateDto request);
     
     /**
      * 更新登录密码
@@ -60,7 +63,7 @@ public interface UserService {
      * @param request 密码更新请求
      * @return 更新结果
      */
-    Result<?> updatePassword(String token, PasswordUpdateRequest request);
+    Result<?> updatePassword(String token, PasswordUpdateDto request);
 
     /**
      * 退出登录
@@ -82,5 +85,7 @@ public interface UserService {
      * @param request 重置密码请求
      * @return 重置结果
      */
-    Result<?> resetPassword(ResetPasswordRequest request);
+    Result<?> resetPassword(ResetPasswordDto request);
+
+
 } 

@@ -8,12 +8,11 @@ import org.software.code.common.util.RedisUtil;
 import org.software.code.dto.BankTransferDto;
 import org.software.code.entity.BankCard;
 import org.software.code.entity.TransferRecord;
-import org.software.code.entity.User;
 import org.software.code.entity.UserBalance;
 import org.software.code.mapper.AssetsMapper;
 import org.software.code.mapper.BillsMapper;
 import org.software.code.mapper.CardsMapper;
-import org.software.code.mapper.UserMapper;
+import org.software.code.client.UserClient;
 import org.software.code.service.AssetsService;
 import org.software.code.vo.AssertsChartItemVo;
 import org.software.code.vo.BalanceSummaryVo;
@@ -27,6 +26,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import org.software.code.common.result.Result;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -43,11 +43,11 @@ public class AssetsServiceImpl implements AssetsService {
     @Autowired
     BillsMapper billsMapper;
     @Autowired
-    UserMapper userMapper;
+    UserClient userClient;
 
     @Transactional
     @Override
-    public void topUp(BankTransferDto bankTransferDto) {
+    public void topUp(BankTransferDto bankTransferDto, Long uid) {
         // 查询银行卡信息
         BankCard bankCard = cardsMapper.selectById(bankTransferDto.getBankCardId());
         if (bankCard == null) {
@@ -56,9 +56,13 @@ public class AssetsServiceImpl implements AssetsService {
 
         //用户id获取
         Long userId = bankCard.getUserId();
-        // 校验支付密码
-        User user = userMapper.selectById(userId);
-        if (!passwordEncoder.matches(bankTransferDto.getPayPassword(), user.getPayPassword())) {
+
+        //银行卡合法检验
+        if (!Objects.equals(bankCard.getUserId(), uid))
+            throw new BusinessException(ExceptionEnum.BANK_CARD_NOT_CORRECT);
+
+        // 校验支付密码 - 通过Feign调用appUser服务
+        if (!userClient.verifyPayPassword(userId, bankTransferDto.getPayPassword())) {
             throw new BusinessException(ExceptionEnum.PAY_PASSWORD_INVALID);
         }
 
@@ -86,7 +90,7 @@ public class AssetsServiceImpl implements AssetsService {
         TransferRecord record = new TransferRecord();
         record.setTransferNumber(UUID.randomUUID().toString());
         record.setUserId(userId);
-        record.setUserName(user.getNickname()); // 实际应查询用户信息
+        record.setUserName(userClient.getUserNickname(userId)); // 通过Feign调用获取用户昵称
         record.setType(1); // 1 = 转入
         record.setBankCardId(bankTransferDto.getBankCardId());
         record.setTargetId(bankTransferDto.getBankCardId());
@@ -102,15 +106,21 @@ public class AssetsServiceImpl implements AssetsService {
 
     @Transactional
     @Override
-    public void withdraw(BankTransferDto bankTransferDto) {
+    public void withdraw(BankTransferDto bankTransferDto, Long uid) {
         BankCard bankCard = cardsMapper.selectById(bankTransferDto.getBankCardId());
         if (bankCard == null) {
             throw new BusinessException(ExceptionEnum.DATA_NOT_FOUND);
         }
 
+        //用户id获取
         Long userId = bankCard.getUserId();
-        User user = userMapper.selectById(userId);
-        if (!passwordEncoder.matches(bankTransferDto.getPayPassword(), user.getPayPassword())) {
+
+        //银行卡合法检验
+        if (!Objects.equals(bankCard.getUserId(), uid))
+            throw new BusinessException(ExceptionEnum.BANK_CARD_NOT_CORRECT);
+
+        // 校验支付密码 - 通过Feign调用appUser服务
+        if (!userClient.verifyPayPassword(userId, bankTransferDto.getPayPassword())) {
             throw new BusinessException(ExceptionEnum.PAY_PASSWORD_INVALID);
         }
 
@@ -129,7 +139,7 @@ public class AssetsServiceImpl implements AssetsService {
         TransferRecord record = new TransferRecord();
         record.setTransferNumber(UUID.randomUUID().toString());
         record.setUserId(userId);
-        record.setUserName(user.getNickname());
+        record.setUserName(userClient.getUserNickname(userId));
         record.setType(2); // 2 = 转出
         record.setBankCardId(bankTransferDto.getBankCardId());
         record.setTargetId(bankTransferDto.getBankCardId());
@@ -225,5 +235,132 @@ public class AssetsServiceImpl implements AssetsService {
         vo.setAssertsChartV0(chartList);
 
         return vo;
+    }
+
+    @Override
+    public BigDecimal getUserBalance(Long userId) {
+        QueryWrapper<UserBalance> wrapper = new QueryWrapper<>();
+        wrapper.eq("user_id", userId);
+        UserBalance userBalance = assetsMapper.selectOne(wrapper);
+        return userBalance != null ? userBalance.getBalance() : BigDecimal.ZERO;
+    }
+
+    @Override
+    @Transactional
+    public void deductBalance(Long userId, BigDecimal amount, String description) {
+        QueryWrapper<UserBalance> wrapper = new QueryWrapper<>();
+        wrapper.eq("user_id", userId);
+        UserBalance userBalance = assetsMapper.selectOne(wrapper);
+        
+        if (userBalance == null || userBalance.getBalance().compareTo(amount) < 0) {
+            throw new BusinessException(ExceptionEnum.BALANCE_INSUFFICIENT);
+        }
+        
+        userBalance.setBalance(userBalance.getBalance().subtract(amount));
+        userBalance.setUpdateTime(LocalDateTime.now());
+        assetsMapper.updateById(userBalance);
+        
+        // 创建交易记录
+        createTransferRecord(userId, amount, 2, description); // 2 = 支出
+    }
+
+    @Override
+    @Transactional
+    public void addBalance(Long userId, BigDecimal amount, String description) {
+        QueryWrapper<UserBalance> wrapper = new QueryWrapper<>();
+        wrapper.eq("user_id", userId);
+        UserBalance userBalance = assetsMapper.selectOne(wrapper);
+        
+        if (userBalance == null) {
+            userBalance = new UserBalance();
+            userBalance.setUserId(userId);
+            userBalance.setBalance(amount);
+            userBalance.setUpdateTime(LocalDateTime.now());
+            assetsMapper.insert(userBalance);
+        } else {
+            userBalance.setBalance(userBalance.getBalance().add(amount));
+            userBalance.setUpdateTime(LocalDateTime.now());
+            assetsMapper.updateById(userBalance);
+        }
+        
+        // 创建交易记录
+        createTransferRecord(userId, amount, 1, description); // 1 = 收入
+    }
+
+    @Override
+    public BalanceSummaryVo getUserAssetsStatistics(Long userId) {
+        // 获取用户余额统计
+        return getBalanceSummary(userId);
+    }
+
+    @Override
+    public List<BankCard> getUserCards(Long userId) {
+        QueryWrapper<BankCard> wrapper = new QueryWrapper<>();
+        wrapper.eq("user_id", userId);
+        return cardsMapper.selectList(wrapper);
+    }
+
+    @Override
+    @Transactional
+    public void createTransactionRecord(Object transactionRecord) {
+        if (transactionRecord instanceof Map) {
+            Map<String, Object> recordMap = (Map<String, Object>) transactionRecord;
+            TransferRecord record = new TransferRecord();
+            
+            record.setTransferNumber((String) recordMap.get("transferNumber"));
+            record.setUserId(((Number) recordMap.get("userId")).longValue());
+            record.setUserName((String) recordMap.get("userName"));
+            record.setType(((Number) recordMap.get("type")).intValue());
+            record.setTargetId(((Number) recordMap.get("targetId")).longValue());
+            record.setTargetType(((Number) recordMap.get("targetType")).intValue());
+            record.setTargetName((String) recordMap.get("targetName"));
+            record.setBizCategory(((Number) recordMap.get("bizCategory")).intValue());
+            record.setAmount((BigDecimal) recordMap.get("amount"));
+            record.setCompleteTime((LocalDateTime) recordMap.get("completeTime"));
+            record.setRemark((String) recordMap.get("remark"));
+            
+            billsMapper.insert(record);
+        }
+    }
+
+    
+
+    @Override
+    @Transactional
+    public Result<Boolean> createUserBalance(Long userId, BigDecimal balance) {
+        try {
+            UserBalance userBalance = new UserBalance();
+            userBalance.setUserId(userId);
+            userBalance.setBalance(balance);
+            userBalance.setUpdateTime(LocalDateTime.now());
+            
+            assetsMapper.insert(userBalance);
+            return Result.success(true);
+        } catch (Exception e) {
+            return Result.success(false);
+        }
+    }
+
+    /**
+     * 创建转账记录
+     */
+    private void createTransferRecord(Long userId, BigDecimal amount, Integer type, String description) {
+        // 通过UserClient获取用户昵称
+        String nickname = userClient.getUserNickname(userId);
+        
+        TransferRecord record = new TransferRecord();
+        record.setTransferNumber(UUID.randomUUID().toString());
+        record.setUserId(userId);
+        record.setUserName(nickname);
+        record.setType(type);
+        record.setTargetId(userId);
+        record.setTargetType(1); // 用户
+        record.setTargetName(nickname);
+        record.setAmount(amount);
+        record.setBizCategory(4); // 其他
+        record.setCompleteTime(LocalDateTime.now());
+        record.setRemark(description);
+        
+        billsMapper.insert(record);
     }
 }

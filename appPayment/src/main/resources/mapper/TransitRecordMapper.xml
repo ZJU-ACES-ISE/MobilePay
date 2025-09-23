@@ -23,9 +23,9 @@
         <result column="updated_time" property="updatedTime" />
     </resultMap>
     
-    <!-- 带站点信息的结果映射 -->
+    <!-- 出行记录结果映射（不包含站点信息，站点信息通过Feign调用获取） -->
     <resultMap id="TransitRecordWithSitesMap" type="java.util.Map">
-        <id column="id" property="id" />
+        <result column="id" property="id" />
         <result column="user_id" property="userId" />
         <result column="mode" property="mode" />
         <result column="entry_site_id" property="entrySiteId" />
@@ -33,29 +33,20 @@
         <result column="entry_time" property="entryTime" />
         <result column="exit_time" property="exitTime" />
         <result column="amount" property="amount" />
+        <result column="discount_amount" property="discountAmount" />
         <result column="actual_amount" property="actualAmount" />
         <result column="status" property="status" />
         <result column="reason" property="reason" />
         <result column="transaction_id" property="transactionId" />
-        <result column="entry_site_name" property="entrySiteName" />
-        <result column="entry_site_line" property="entrySiteLine" />
-        <result column="exit_site_name" property="exitSiteName" />
-        <result column="exit_site_line" property="exitSiteLine" />
     </resultMap>
     
-    <!-- 查询用户的出行记录，包含站点信息 -->
+    <!-- 查询用户的出行记录（站点信息通过Feign调用AdminClient获取） -->
     <select id="selectUserTransitRecordsWithSites" resultMap="TransitRecordWithSitesMap">
         SELECT 
             tr.id, tr.user_id, tr.mode, tr.entry_site_id, tr.exit_site_id,
-            tr.entry_time, tr.exit_time, tr.amount, tr.actual_amount, tr.status, tr.reason, tr.transaction_id,
-            es.site_name as entry_site_name, es.line_name as entry_site_line,
-            xs.site_name as exit_site_name, xs.line_name as exit_site_line
+            tr.entry_time, tr.exit_time, tr.amount, tr.discount_amount, tr.actual_amount, tr.status, tr.reason, tr.transaction_id
         FROM 
             transit_record tr
-        LEFT JOIN 
-            site es ON tr.entry_site_id = es.id
-        LEFT JOIN 
-            site xs ON tr.exit_site_id = xs.id
         WHERE 
             tr.user_id = #{userId}
         ORDER BY 
@@ -63,4 +54,30 @@
         LIMIT #{limit}
     </select>
     
+    <!-- 调试查询：获取数据库时区和时间信息 -->
+    <select id="getTimeZoneInfo" resultType="java.util.Map">
+        SELECT 
+            NOW() as `current_time`,
+            @@session.time_zone as session_timezone,
+            @@global.time_zone as global_timezone,
+            @@system_time_zone as system_timezone,
+            UNIX_TIMESTAMP(NOW()) as unix_timestamp,
+            FROM_UNIXTIME(UNIX_TIMESTAMP(NOW())) as from_unix_time,
+            CONVERT_TZ(NOW(), @@session.time_zone, '+08:00') as `beijing_time`,
+            UTC_TIMESTAMP() as `utc_time`
+    </select>
+    
+    <!-- 调试查询：获取最新的入站记录时间信息 -->
+    <select id="getLatestEntryTimeInfo" resultType="java.util.Map">
+        SELECT 
+            id,
+            user_id,
+            entry_time,
+            UNIX_TIMESTAMP(entry_time) as entry_unix_timestamp,
+            FROM_UNIXTIME(UNIX_TIMESTAMP(entry_time)) as entry_from_unix
+        FROM transit_record 
+        WHERE user_id = #{userId}
+        ORDER BY id DESC 
+        LIMIT 1
+    </select>
 </mapper> 

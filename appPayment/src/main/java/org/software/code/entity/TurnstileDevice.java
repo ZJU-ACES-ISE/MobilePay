@@ -1,65 +1,62 @@
 package org.software.code.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
-import lombok.Data;
-
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 /**
- * 闸机设备实体类
+ * <p>
+ * 
+ * </p>
+ *
+ * @author "101"计划《软件工程》实践教材案例团队
+ * @since 2025-07-31
  */
-@Data
+@Getter
+@Setter
+@Accessors(chain = true)
 @TableName("turnstile_device")
 public class TurnstileDevice implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 主键ID
-     */
-    @TableId(type = IdType.AUTO)
+    @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    /**
-     * 设备编号
-     */
+    @TableField("device_code")
     private String deviceCode;
 
-    /**
-     * 设备名称
-     */
-    private String deviceName;
-
-    /**
-     * 所属站点ID
-     */
+    @TableField("site_id")
     private Long siteId;
 
-    /**
-     * 设备位置描述
-     */
-    private String location;
+    @TableField("device_type")
+    private String deviceType;
 
-    /**
-     * 设备类型（ENTRY入站，EXIT出站，DUAL双向）
-     */
-    private String type;
+    @TableField("device_name")
+    private String deviceName;
 
-    /**
-     * 状态（ACTIVE正常，INACTIVE停用，MAINTENANCE维护中）
-     */
+    @TableField("status")
     private String status;
 
-    /**
-     * 创建时间
-     */
-    @TableField(fill = FieldFill.INSERT)
+    @TableField("last_heartbeat")
+    private LocalDateTime lastHeartbeat;
+
+    @TableField("firmware_version")
+    private String firmwareVersion;
+
+    @TableField("type")
+    private String type;
+
+    @TableField("created_time")
     private LocalDateTime createdTime;
 
-    /**
-     * 更新时间
-     */
-    @TableField(fill = FieldFill.INSERT_UPDATE)
+    @TableField("updated_time")
     private LocalDateTime updatedTime;
+
 } 

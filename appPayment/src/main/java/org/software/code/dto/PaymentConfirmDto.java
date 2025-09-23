@@ -46,4 +46,9 @@ public class PaymentConfirmDto {
      * 支出分类（type=2时必填）
      */
     private Integer bizCategory;
+    
+    /**
+     * 折扣策略ID（可选）
+     */
+    private Long discountStrategyId;
 } 

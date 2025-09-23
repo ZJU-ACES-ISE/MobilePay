@@ -40,17 +40,17 @@ public class QRCodeParseResultVo {
     private Long userId;
     
     /**
-     * 金额（单位：分）
+     * 金额（单位：元）
      */
-    private Integer amount;
+    private Double amount;
     
     /**
-     * 折扣（单位：分）
+     * 折扣（单位：元）
      */
-    private Integer discount;
+    private Double discount;
     
     /**
-     * 实际金额（单位：分）
+     * 实际金额（单位：元）
      */
-    private Integer actualAmount;
+    private Double actualAmount;
 } 

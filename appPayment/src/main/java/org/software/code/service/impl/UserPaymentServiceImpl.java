@@ -1,15 +1,14 @@
 package org.software.code.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.software.code.common.result.Result;
 import org.software.code.common.result.ResultEnum;
 import org.software.code.common.util.JwtUtil;
-import org.software.code.entity.UserBalance;
-import org.software.code.mapper.UserBalanceMapper;
+import org.software.code.client.AssetsClient;
 import org.software.code.service.UserPaymentService;
 import org.software.code.vo.UserBalanceVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import java.math.BigDecimal;
 
 /**
  * 用户服务实现类
@@ -20,7 +19,7 @@ public class UserPaymentServiceImpl implements UserPaymentService {
 
     
     @Autowired
-    private UserBalanceMapper userBalanceMapper;
+    private AssetsClient assetsClient;
 
     @Override
     public Result<UserBalanceVo> getUserBalance(String authorization) {
@@ -29,19 +28,17 @@ public class UserPaymentServiceImpl implements UserPaymentService {
             String token = authorization.replace("Bearer ", "");
             Long userId = JwtUtil.extractID(token);
             
-            // 从数据库获取用户余额
-            QueryWrapper<UserBalance> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("user_id", userId);
-            UserBalance userBalance = userBalanceMapper.selectOne(queryWrapper);
+            // 通过Feign调用获取用户余额
+            BigDecimal balanceResult = assetsClient.getUserBalance(userId);
             
-            if (userBalance == null) {
+            if (balanceResult == null) {
                 return Result.instance(ResultEnum.FAILED.getCode(), "用户余额信息不存在", null);
             }
             
             // 构建返回结果
             UserBalanceVo balanceVo = UserBalanceVo.builder()
                     .userId(userId.toString())
-                    .balance(userBalance.getBalance().toString())
+                    .balance(balanceResult.toString())
                     .build();
             
             return Result.success("查询成功", balanceVo);

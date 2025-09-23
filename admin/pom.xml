@@ -36,12 +36,17 @@
             <artifactId>mybatis-plus-jsqlparser</artifactId>
             <version>3.5.12</version>
         </dependency>
+        <!-- https://baomidou.com/guides/dynamic-datasource/  -->
+        <dependency>
+          <groupId>com.baomidou</groupId>
+          <artifactId>dynamic-datasource-spring-boot-starter</artifactId>
+          <version>4.3.1</version>
+        </dependency>
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.23</version>
         </dependency>
-        
         <!-- Redis Cache -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

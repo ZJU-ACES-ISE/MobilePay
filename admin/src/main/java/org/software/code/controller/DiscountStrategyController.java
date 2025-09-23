@@ -103,7 +103,7 @@ public class DiscountStrategyController {
     @AdminRole()
     public Result<?> updateDiscountStrategy(
             @Parameter(description = "策略ID") @PathVariable @NotNull Long id,
-            @Parameter(description = "策略更新信息") @RequestBody @Valid DiscountStrategyCreateDto createDto,
+            @Parameter(description = "策略更新信息") @RequestBody DiscountStrategyCreateDto createDto,
             @RequestHeader("X-User-Id") String adminId) {
         
         logger.info("管理员更新折扣策略，管理员ID：{}，策略ID：{}", adminId, id);

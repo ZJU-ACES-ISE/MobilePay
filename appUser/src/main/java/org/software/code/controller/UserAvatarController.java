@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import org.software.code.common.except.BusinessException;
+import org.software.code.common.except.ExceptionEnum;
 import org.software.code.common.result.Result;
 import org.software.code.common.util.OSSUtil;
 import org.software.code.service.UserService;
@@ -84,7 +86,7 @@ public class UserAvatarController {
             
         } catch (Exception e) {
             e.printStackTrace();
-            return Result.instance(400, "头像上传失败: " + e.getMessage(), null);
+            return Result.instance(Integer.parseInt(ExceptionEnum.AVATAR_UPLOAD_FAILED.getCode()), ExceptionEnum.AVATAR_UPLOAD_FAILED.getMsg(), null);
         }
     }
 } 

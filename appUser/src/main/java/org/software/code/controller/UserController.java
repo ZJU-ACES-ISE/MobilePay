@@ -7,20 +7,18 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.software.code.common.result.Result;
 import org.software.code.service.UserService;
-import org.software.code.vo.VerifyCodeVo;
 import org.software.code.vo.UserVo;
-import org.software.code.dto.UserRegisterRequest;
-import org.software.code.dto.UserLoginRequest;
-import org.software.code.dto.UserProfileUpdateRequest;
-import org.software.code.dto.PasswordUpdateRequest;
+import org.software.code.dto.UserRegisterDto;
+import org.software.code.dto.UserLoginDto;
+import org.software.code.dto.UserProfileUpdateDto;
+import org.software.code.dto.PasswordUpdateDto;
 import org.software.code.vo.UserRegisterVo;
 import org.software.code.vo.UserLoginVo;
-import org.software.code.dto.ResetPasswordRequest;
+import org.software.code.dto.ResetPasswordDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -65,7 +63,7 @@ public class UserController {
         @ApiResponse(responseCode = "400", description = "注册失败")
     })
     @PostMapping("/register")
-    public Result<UserRegisterVo> register(@RequestBody UserRegisterRequest request) {
+    public Result<UserRegisterVo> register(@RequestBody UserRegisterDto request) {
         return userService.register(request.getPhone(), request.getLoginPassword(), request.getPayPassword());
     }
     
@@ -80,7 +78,7 @@ public class UserController {
         @ApiResponse(responseCode = "400", description = "登录失败")
     })
     @PostMapping("/login")
-    public Result<UserLoginVo> login(@RequestBody UserLoginRequest request) {
+    public Result<UserLoginVo> login(@RequestBody UserLoginDto request) {
         String credential = "password".equals(request.getLoginType()) ? 
                 request.getLoginPassword() : request.getVerifyCode();
         return userService.login(request.getPhone(), request.getLoginType(), credential);
@@ -118,7 +116,7 @@ public class UserController {
     public Result<UserVo> updateProfile(
             @Parameter(description = "Bearer 类型 Token 认证", required = true)
             @RequestHeader("Authorization") String token,
-            @RequestBody UserProfileUpdateRequest request) {
+            @RequestBody UserProfileUpdateDto request) {
         return userService.updateUserProfile(token, request);
     }
     
@@ -137,7 +135,7 @@ public class UserController {
     public Result<?> updatePaymentPassword(
             @Parameter(description = "Bearer 类型 Token 认证", required = true)
             @RequestHeader("Authorization") String token,
-            @RequestBody PasswordUpdateRequest request) {
+            @RequestBody PasswordUpdateDto request) {
         return userService.updatePaymentPassword(token, request);
     }
     
@@ -156,7 +154,7 @@ public class UserController {
     public Result<?> updatePassword(
             @Parameter(description = "Bearer 类型 Token 认证", required = true)
             @RequestHeader("Authorization") String token,
-            @RequestBody PasswordUpdateRequest request) {
+            @RequestBody PasswordUpdateDto request) {
         return userService.updatePassword(token, request);
     }
 
@@ -172,7 +170,7 @@ public class UserController {
         @ApiResponse(responseCode = "401", description = "验证码错误或已过期")
     })
     @PostMapping("/password/reset")
-    public Result<?> resetPassword(@Validated @RequestBody ResetPasswordRequest request) {
+    public Result<?> resetPassword(@Validated @RequestBody ResetPasswordDto request) {
         return userService.resetPassword(request);
     }
 }

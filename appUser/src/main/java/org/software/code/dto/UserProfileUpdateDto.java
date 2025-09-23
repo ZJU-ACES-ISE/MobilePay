@@ -8,7 +8,7 @@ import lombok.Data;
  */
 @Data
 @Schema(description = "用户个人信息更新请求")
-public class UserProfileUpdateRequest {
+public class UserProfileUpdateDto {
     
     /**
      * 用户昵称
