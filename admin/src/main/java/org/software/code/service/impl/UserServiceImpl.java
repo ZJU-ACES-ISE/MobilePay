@@ -3,6 +3,7 @@ package org.software.code.service.impl;
 import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -13,29 +14,12 @@ import org.software.code.common.except.BusinessException;
 import org.software.code.common.except.ExceptionEnum;
 import org.software.code.dto.UserAuditDto;
 import org.software.code.dto.UserSearchDto;
-import org.software.code.entity.Site;
-import org.software.code.entity.TransitRecord;
-import org.software.code.entity.User;
-import org.software.code.entity.UserAuditRecord;
-import org.software.code.entity.UserBalance;
-import org.software.code.entity.TurnstileDevice;
-import org.software.code.entity.UserVerification;
-import org.software.code.mapper.SiteMapper;
-import org.software.code.mapper.TransitRecordMapper;
-import org.software.code.mapper.UserAuditRecordMapper;
-import org.software.code.mapper.UserBalanceMapper;
-import org.software.code.mapper.UserMapper;
-import org.software.code.mapper.TurnstileDeviceMapper;
-import org.software.code.mapper.UserVerificationMapper;
+import org.software.code.entity.*;
+import org.software.code.mapper.*;
 import org.software.code.service.UserBalanceService;
 import org.software.code.service.UserService;
-import org.software.code.vo.PendingUserVo;
-import org.software.code.vo.TransitRecordVo;
-import org.software.code.vo.UserDetailVo;
-import org.software.code.vo.UserListVo;
-import org.software.code.vo.UserStatisticsVo;
+import org.software.code.vo.*;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -43,10 +27,11 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import org.springframework.util.StringUtils;
-
 import java.util.stream.Collectors;
+
+import static org.springframework.util.StringUtils.hasText;
 
 /**
  * <p>
@@ -83,13 +68,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public Page<UserListVo> getUserPage(Integer pageNum, Integer pageSize, UserSearchDto searchDto) {
         logger.info("获取用户列表分页数据，页码：{}，页大小：{}", pageNum, pageSize);
-
+        if (searchDto == null) {
+            searchDto = new UserSearchDto();
+        }
         Page<User> userPage = new Page<>(pageNum, pageSize);
         Page<User> resultPage = userMapper.selectPage(
             userPage,
             Wrappers.<User>lambdaQuery()
-                .like(StringUtils.hasText(searchDto.getKeyword()), User::getNickname, searchDto.getKeyword())
-                .eq(StringUtils.hasText(searchDto.getStatus()), User::getStatus, searchDto.getStatus())
+                .like(hasText(searchDto.getKeyword()), User::getNickname, searchDto.getKeyword())
+                .eq(hasText(searchDto.getStatus()), User::getStatus, searchDto.getStatus())
         );
 
         // 直接使用 convert 转换 records
@@ -218,12 +205,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public List<UserListVo> searchUsersByKeyword(String keyword) {
         logger.info("根据关键字搜索用户，关键字：{}", keyword);
-
-        List<User> users = userMapper.selectList(Wrappers.<User>lambdaQuery()
-                .like(User::getNickname, keyword));
-        users.addAll(userMapper.selectList(Wrappers.<User>lambdaQuery()
-                .like(User::getPhone, keyword)));
+        if (StringUtils.isBlank(keyword)) {
+            return Collections.emptyList();
+        }
+        List<User> users = userMapper.selectList(
+                Wrappers.<User>lambdaQuery()
+                        .like(User::getNickname, keyword)
+                        .or()
+                        .like(User::getPhone, keyword)
+        );
         return users.stream()
+                .distinct()
                 .map(this::convertToUserListVo)
                 .collect(Collectors.toList());
     }

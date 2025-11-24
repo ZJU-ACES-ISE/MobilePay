@@ -26,6 +26,7 @@ import org.springframework.util.StringUtils;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -210,7 +211,9 @@ public class TurnstileDeviceServiceImpl extends ServiceImpl<TurnstileDeviceMappe
     @Override
     public List<DeviceListVo> searchDevicesByKeyword(String keyword) {
         logger.info("根据关键字搜索设备，关键字：{}", keyword);
-
+        if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(keyword)) {
+            return Collections.emptyList();
+        }
         List<TurnstileDevice> devices = turnstileDeviceMapper.selectList(
             Wrappers.<TurnstileDevice>lambdaQuery()
                 .and(w -> w.like(TurnstileDevice::getDeviceName, keyword)

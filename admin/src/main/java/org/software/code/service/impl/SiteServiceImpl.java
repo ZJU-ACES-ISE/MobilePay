@@ -30,6 +30,7 @@ import org.springframework.util.StringUtils;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -151,8 +152,10 @@ public class SiteServiceImpl extends ServiceImpl<SiteMapper, Site> implements Si
     @Override
     @Transactional
     public SiteDetailVo createSite(SiteCreateDto createDto, Long adminId) {
+        if(createDto == null) {
+            return null;
+        }
         logger.info("创建站点，站点编码：{}，站点名称：{}", createDto.getSiteCode(), createDto.getSiteName());
-
         try {
             // 检查站点编码是否已存在
             if (checkSiteCodeExists(createDto.getSiteCode(), null)) {
@@ -192,6 +195,9 @@ public class SiteServiceImpl extends ServiceImpl<SiteMapper, Site> implements Si
     @Override
     @Transactional
     public SiteDetailVo updateSite(Long siteId, SiteUpdateDto updateDto, Long adminId) {
+        if (updateDto == null) {
+            return null;
+        }
         logger.info("更新站点信息，站点ID：{}", siteId);
 
         try {
@@ -311,7 +317,9 @@ public class SiteServiceImpl extends ServiceImpl<SiteMapper, Site> implements Si
     @Override
     public List<SiteListVo> searchSitesByKeyword(String keyword) {
         logger.info("根据关键字搜索站点，关键字：{}", keyword);
-
+        if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(keyword)) {
+            return Collections.emptyList();
+        }
         List<Site> sites = siteMapper.selectList(Wrappers.<Site>lambdaQuery()
                 .like(Site::getSiteName, keyword));
         return sites.stream()
