@@ -1,8 +1,11 @@
 package org.software.code.aspect;
 
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Aspect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
 
 /**
@@ -20,5 +23,19 @@ public class DatabaseExceptionAspect {
 
     // 创建一个 Logger 实例，用于记录日志，日志记录的类为当前 DatabaseExceptionAspect 类。
     private static final Logger logger = LoggerFactory.getLogger(DatabaseExceptionAspect.class);
+
+    @AfterThrowing(
+            pointcut = "execution(* org.software.code.service..*(..))",
+            throwing = "ex"
+    )
+    public void handleDatabaseException(JoinPoint joinPoint, Throwable ex) {
+        String method = joinPoint.getSignature().toShortString();
+        logger.error("Database exception caught in method {}: {}", method, ex.getMessage(), ex);
+
+        if (ex instanceof DataAccessException) {
+            throw new RuntimeException("Database operation failed");
+        }
+        throw new RuntimeException(ex);
+    }
 
 }

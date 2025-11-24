@@ -44,7 +44,6 @@ public class StatisticsServiceImpl implements StatisticsService {
     @Override
     public UserStatisticsVo getUserStatistics(String startDate, String endDate) {
         logger.info("查询用户统计数据，开始日期：{}，结束日期：{}", startDate, endDate);
-        
         try {
             // 构建查询条件
             QueryWrapper<User> queryWrapper = new QueryWrapper<>();
